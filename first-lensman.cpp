@@ -1,6 +1,11 @@
 #include <SDL/SDL.h>
 #include <unistd.h>
 #include "omxcam.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
+
+using namespace cv;
 
 #define WIDTH 640
 #define HEIGHT 480
@@ -9,6 +14,8 @@
 static SDL_Surface *screen;
 static SDL_Surface *frame;
 static int current = 0;
+static Ptr<FeatureDetector> detector;
+static std::vector<KeyPoint> keyPoints;
 
 extern "C" void on_data (omxcam_buffer_t buffer){
         //printf("%d %d ", current, buffer.length);
@@ -32,7 +39,6 @@ int main (){
         screen = SDL_SetVideoMode(WIDTH, HEIGHT, 24, SDL_HWSURFACE | SDL_DOUBLEBUF);
     	 
 	frame = SDL_CreateRGBSurface(SDL_SWSURFACE, WIDTH, HEIGHT, 24,   
-                //        0x00ff0000, 0x0000ff00, 0x000000ff, 0);
 			0x000000ff, 0x0000ff00, 0x00ff0000, 0);
         SDL_Flip(screen);
 	//The settings of the image capture
@@ -46,6 +52,8 @@ int main (){
   
   	//Set the buffer callback, this is mandatory
   	settings.on_data = &on_data;
+
+	detector = FeatureDetector::create("STAR");
   
   	//Start the image streaming
 	omxcam_video_start(&settings, OMXCAM_CAPTURE_FOREVER);
@@ -56,10 +64,16 @@ int main (){
                 SDL_Event event;
                 if (SDL_PollEvent(&event))
                 {
-                        if (event.type == SDL_QUIT)
+                        switch (event.type)
 			{
+			case SDL_QUIT:
 				omxcam_video_stop();
                                 quit = 1;
+				break;
+			case SDL_KEYDOWN:
+				if (event.key.which == 'q')
+					quit = 1;
+				break;
 			}
                 }
         }
