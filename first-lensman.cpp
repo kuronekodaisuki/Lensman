@@ -11,12 +11,30 @@ using namespace cv;
 #define HEIGHT 480
 #define SIZE_OF_FRAME (WIDTH * HEIGHT * 3)
 
-static SDL_Surface *screen;
-static SDL_Surface *frame;
+static SDL_Surface *screen;// Screen 
+static SDL_Surface *frame; // Buffer
 static int current = 0;
+
+// OpenCV detect features
+static Mat image;
 static Ptr<FeatureDetector> detector;
 static std::vector<KeyPoint> keyPoints;
 
+inline Uint8 *scanLine(SDL_Surface *surface, int y, int x)
+{
+        return (Uint8 *)(surface->pixels) + (y * surface->pitch) + (surface->format->BytesPerPixel * x);
+}
+
+// Show result
+void show()
+{
+	SDL_Rect srcRect = {0, 0, WIDTH, HEIGHT};
+	SDL_Rect dstRect = {0, 0};
+	SDL_BlitSurface(frame, &srcRect, screen, &dstRect);
+	SDL_Flip(screen);
+}
+
+// Get image date from camera
 extern "C" void on_data (omxcam_buffer_t buffer){
         //printf("%d %d ", current, buffer.length);
 
@@ -24,16 +42,14 @@ extern "C" void on_data (omxcam_buffer_t buffer){
 	current += buffer.length;
 	if (SIZE_OF_FRAME <= current)
 	{
+		show();
 		//printf("%d ", current);
-		SDL_Rect srcRect = {0, 0, WIDTH, HEIGHT};
-		SDL_Rect dstRect = {0, 0};
-		SDL_BlitSurface(frame, &srcRect, screen, &dstRect);
-		SDL_Flip(screen);
 		current = 0; 
 	}
 }
 
-int main (){
+int main (int argc, char *argv[])
+{
         int quit = 0;
 	SDL_Init(SDL_INIT_EVERYTHING);
         screen = SDL_SetVideoMode(WIDTH, HEIGHT, 24, SDL_HWSURFACE | SDL_DOUBLEBUF);
