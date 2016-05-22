@@ -69,6 +69,7 @@ int main (int argc, char *argv[])
   	//Set the buffer callback, this is mandatory
   	settings.on_data = &on_data;
 
+	//image.create(WIDTH, HEIGHT, CV_8UC3);
 	detector = FeatureDetector::create("STAR");
   
   	//Start the image streaming
