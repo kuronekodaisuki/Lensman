@@ -29,8 +29,10 @@ int main(int argc, char* argv[])
 		if (image.empty())
 			break;
 
-		//
-		detector->detect(image, keypoint);
+		// Detect feature points every second
+		// and interpolate with IMU information
+		//detector->detect(image, keypoint);
+
 		printf("%d\n", (int)keypoint.size());
 		for (unsigned int i = 0; i < keypoint.size(); i++)
 		{
