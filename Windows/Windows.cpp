@@ -1,26 +1,46 @@
-// Windows.cpp : コンソール アプリケーションのエントリ ポイントを定義します。
+// Windows.cpp : 
 //
 
 #include "stdafx.h"
 #include <opencv2/opencv.hpp>
+#include <opencv2/ocl/ocl.hpp>
 
 #pragma comment(lib, "opencv_core2410.lib")
 #pragma comment(lib, "opencv_features2d2410.lib")
 #pragma comment(lib, "opencv_flann2410.lib")
 #pragma comment(lib, "opencv_highgui2410.lib")
 #pragma comment(lib, "opencv_imgproc2410.lib")
+#pragma comment(lib, "opencv_ml2410.lib")
 #pragma comment(lib, "opencv_objdetect2410.lib")
+#pragma comment(lib, "opencv_ocl2410.lib")
 #pragma comment(lib, "opencv_video2410.lib")
 
 using namespace cv;
+using namespace cv::ocl;
+
+void checkOpenCL()
+{
+	DevicesInfo devices;
+	getOpenCLDevices(devices);
+
+	for (size_t i = 0; i < devices.size(); i++)
+	{
+		const DeviceInfo *info = devices[i];
+		printf("%s : %s\n", info->deviceName.c_str(), info->deviceVersion.c_str());
+	}
+}
 
 int main(int argc, char* argv[])
 {
 	VideoCapture camera;
 	camera.open(0);
 	
+	checkOpenCL();
+
 	Ptr<FeatureDetector> detector = FeatureDetector::create("STAR");
-	// 特徴点情報を格納するための変数
+	GoodFeaturesToTrackDetector_OCL ocl;
+
+	// features
 	std::vector<KeyPoint> keypoint;
 
 	Mat image;
@@ -37,8 +57,14 @@ int main(int argc, char* argv[])
 		if (image.empty())
 			break;
 
-		// 特徴点抽出の実行
+		// detect features
 		detector->detect(image, keypoint);
+		
+		// OpenCL
+		//oclMat oclImage;
+		//oclMat oclCorners;
+		//ocl(oclImage, oclCorners);
+
 		printf("%d\n", keypoint.size());
 		for (int i = 0; i < keypoint.size(); i++)
 		{
