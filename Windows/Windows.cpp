@@ -10,6 +10,7 @@
 #pragma comment(lib, "opencv_flann2410.lib")
 #pragma comment(lib, "opencv_highgui2410.lib")
 #pragma comment(lib, "opencv_imgproc2410.lib")
+#pragma comment(lib, "opencv_ml2410.lib")
 #pragma comment(lib, "opencv_objdetect2410.lib")
 #pragma comment(lib, "opencv_ocl2410.lib")
 #pragma comment(lib, "opencv_video2410.lib")
@@ -17,11 +18,25 @@
 using namespace cv;
 using namespace cv::ocl;
 
+void checkOpenCL()
+{
+	DevicesInfo devices;
+	getOpenCLDevices(devices);
+
+	for (size_t i = 0; i < devices.size(); i++)
+	{
+		const DeviceInfo *info = devices[i];
+		printf("%s : %s\n", info->deviceName.c_str(), info->deviceVersion.c_str());
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	VideoCapture camera;
 	camera.open(0);
 	
+	checkOpenCL();
+
 	Ptr<FeatureDetector> detector = FeatureDetector::create("STAR");
 	GoodFeaturesToTrackDetector_OCL ocl;
 
