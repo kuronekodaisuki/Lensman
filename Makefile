@@ -1,9 +1,10 @@
 APP = first-lensman
-CC = gcc
+CC = g++
 CFLAGS = -Werror -g -Wall -O2 -lc++ -x c++
 OPENCV_LIB = -lopencv_core -lopencv_features2d -lopencv_objdetect -lopencv_flann
-LDFLAGS = -lstdc++ -L/opt/vc/lib $(OPENCV_LIB) -lopenmaxil -lbcm_host -lvchiq_arm -lpthread \
-		-L./$(OMXCAM_HOME)/lib -lomxcam -lSDL -Wl,-rpath=$(OMXCAM_HOME)/lib
+
+LDFLAGS = -lstdc++ -L/usr/lib/aarch64-linux-gnu/ $(OPENCV_LIB) -lpthread  \
+		 
 INCLUDES = -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads \
 		-I/opt/vc/include/interface/vmcs_host/linux -I./$(OMXCAM_HOME)/include
 
