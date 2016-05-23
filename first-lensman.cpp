@@ -9,13 +9,19 @@ using namespace cv::ocl;
 
 void checkOpenCL()
 {
-        DevicesInfo devices;
-        getOpenCLDevices(devices);
+	PlatformsInfo platforms;
+	getOpenCLPlatforms(platforms);
+  
+	for (size_t p = 0; p < platforms.size(); p++)
+      	{
+		DevicesInfo devices;
+        	getOpenCLDevices(devices, CVCL_DEVICE_TYPE_GPU, platforms[p]);
 
-        for (size_t i = 0; i < devices.size(); i++)
-        {
-                const DeviceInfo *info = devices[i];
-                printf("%s : %s\n", info->deviceName.c_str(), info->deviceVersion.c_str());
+	        for (size_t i = 0; i < devices.size(); i++)
+        	{
+                	const DeviceInfo *info = devices[i];
+                	printf("%s : %s\n", info->deviceName.c_str(), info->deviceVersion.c_str());
+		}
         }
 }
 
