@@ -1,7 +1,7 @@
 APP = first-lensman
 CC = g++
 CFLAGS = -Werror -g -Wall -O2 -lc++ -x c++
-OPENCV_LIB = -lopencv_core -lopencv_features2d -lopencv_objdetect -lopencv_flann
+OPENCV_LIB = -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_objdetect -lopencv_video
 
 LDFLAGS = -lstdc++ -L/usr/lib/aarch64-linux-gnu/ $(OPENCV_LIB) -lpthread  \
 		 
@@ -17,7 +17,7 @@ all: $(APP) $(SRC)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ -Wno-deprecated-declarations
 
 $(APP): $(OBJS)
-	$(CC) -o $@ -Wl,--whole-archive $(OBJS) $(LDFLAGS) -Wl,--no-whole-archive -rdynamic
+	$(CC) -o $@  $(OBJS) $(LDFLAGS) -rdynamic
 
 .PHONY: clean rebuild
 
