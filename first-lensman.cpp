@@ -2,7 +2,9 @@
 
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
-#include <opencv2/ocl/ocl.hpp>
+#include <SDL/SDL.h>
+#include "omxcam.h"
+#include "omxcam.h"
 
 using namespace cv;
 
