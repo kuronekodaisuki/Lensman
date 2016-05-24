@@ -26,7 +26,10 @@ void checkOpenCL()
 	for (size_t i = 0; i < devices.size(); i++)
 	{
 		const DeviceInfo *info = devices[i];
-		printf("%s : %s\n", info->deviceName.c_str(), info->deviceVersion.c_str());
+		printf("%s : %s\nMax Compute unit:%d\n%s\n%s", 
+			info->deviceName.c_str(), info->deviceVersion.c_str(), info->maxComputeUnits, 
+			info->compilationExtraOptions.c_str(),
+			info->deviceExtensions.c_str());
 	}
 }
 
