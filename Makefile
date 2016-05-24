@@ -1,7 +1,7 @@
 APP = first-lensman
 CC = g++
 CFLAGS = -Werror -g -Wall -O2 -lc++ -x c++
-OPENCV_LIB = -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_objdetect -lopencv_video
+OPENCV_LIB = -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -lopencv_ml -lopencv_objdetect -lopencv_ocl -lopencv_video
 
 LDFLAGS = -lstdc++ -L/usr/lib/aarch64-linux-gnu/ $(OPENCV_LIB) -lpthread  \
 		 
