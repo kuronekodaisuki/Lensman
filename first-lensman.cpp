@@ -1,54 +1,65 @@
-#include <SDL/SDL.h>
-#include <unistd.h>
-#include "omxcam.h"
-#include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/objdetect/objdetect.hpp>
+// DragonBoard410c
+
+#include <stdio.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/ocl/ocl.hpp>
 
 using namespace cv;
+using namespace cv::ocl;
 
-#define WIDTH 640
-#define HEIGHT 480
-#define SIZE_OF_FRAME (WIDTH * HEIGHT * 3)
-
-static SDL_Surface *screen;// Screen 
-static SDL_Surface *frame; // Buffer
-static int current = 0;
-
-// OpenCV detect features
-static Mat image;
-static Ptr<FeatureDetector> detector;
-static std::vector<KeyPoint> keyPoints;
-
-inline Uint8 *scanLine(SDL_Surface *surface, int y, int x)
+void checkOpenCL()
 {
-        return (Uint8 *)(surface->pixels) + (y * surface->pitch) + (surface->format->BytesPerPixel * x);
+	PlatformsInfo platforms;
+	getOpenCLPlatforms(platforms);
+  
+	for (size_t p = 0; p < platforms.size(); p++)
+      	{
+		DevicesInfo devices;
+        	getOpenCLDevices(devices, CVCL_DEVICE_TYPE_GPU, platforms[p]);
+
+	        for (size_t i = 0; i < devices.size(); i++)
+        	{
+                	const DeviceInfo *info = devices[i];
+                	printf("%s : %s\n", info->deviceName.c_str(), info->deviceVersion.c_str());
+		}
+        }
 }
 
-// Show result
-void show()
+int main(int argc, char* argv[])
 {
+<<<<<<< HEAD
 	SDL_Rect srcRect = {0, 0, WIDTH, HEIGHT};
 	SDL_Rect dstRect = {0, 0};
 	SDL_BlitSurface(frame, &srcRect, screen, &dstRect);
 	SDL_Flip(screen);
 	memcpy(image.data, frame->pixels, 3 * WIDTH * HEIGHT);
 }
+=======
+	VideoCapture camera;
+	camera.open(0);
+>>>>>>> fb00f1b4c5ef512077df1b0ccaac9e5ec80a48d9
 
-// Get image date from camera
-extern "C" void on_data (omxcam_buffer_t buffer){
-        //printf("%d %d ", current, buffer.length);
+	checkOpenCL();
+	
+	Ptr<FeatureDetector> detector = FeatureDetector::create("STAR");
+	//
+	std::vector<KeyPoint> keypoint;
 
-	memcpy((char *)(frame->pixels) + current, buffer.data, buffer.length);
-	current += buffer.length;
-	if (SIZE_OF_FRAME <= current)
+	Mat image;
+	Mat buffer(640, 480, CV_8UC3, NULL);
+	for (bool loop = true; loop; )
 	{
-		show();
-		//printf("%d ", current);
-		current = 0; 
-	}
-}
+		switch (waitKey(10))
+		{
+		case 'q':
+			loop = false;
+			break;
+		}
+		camera >> image;
+		if (image.empty())
+			break;
 
+<<<<<<< HEAD
 int main (int argc, char *argv[])
 {
         int quit = 0;
@@ -99,6 +110,20 @@ int main (int argc, char *argv[])
         }
   
 	SDL_Quit();
+=======
+		// Detect feature points every second
+		// and interpolate with IMU information
+		detector->detect(image, keypoint);
+
+		printf("%d\n", (int)keypoint.size());
+		for (unsigned int i = 0; i < keypoint.size(); i++)
+		{
+			Point2f pt = keypoint[i].pt;
+			circle(image, Point(pt.x, pt.y), 3, Scalar(0, 0, 255));
+		}
+		imshow("image", image);
+	}
+>>>>>>> fb00f1b4c5ef512077df1b0ccaac9e5ec80a48d9
 	return 0;
 }
 
