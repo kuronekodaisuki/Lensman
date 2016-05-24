@@ -32,6 +32,7 @@ void show()
 	SDL_Rect dstRect = {0, 0};
 	SDL_BlitSurface(frame, &srcRect, screen, &dstRect);
 	SDL_Flip(screen);
+	memcpy(image.data, frame->pixels, 3 * WIDTH * HEIGHT);
 }
 
 // Get image date from camera
@@ -56,6 +57,8 @@ int main (int argc, char *argv[])
     	 
 	frame = SDL_CreateRGBSurface(SDL_SWSURFACE, WIDTH, HEIGHT, 24,   
 			0x000000ff, 0x0000ff00, 0x00ff0000, 0);
+	image.create(HEIGHT, WIDTH, CV_8UC3);
+
         SDL_Flip(screen);
 	//The settings of the image capture
 	omxcam_video_settings_t	settings;
