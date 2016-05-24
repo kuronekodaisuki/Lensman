@@ -1,6 +1,6 @@
 // I2C,h
 
-public class I2C
+class I2C
 {
 protected:
 	char _device_addr;
@@ -13,7 +13,7 @@ public:
 	int  ReadWord(char reg_addr);
 };
 
-public class MPU_6050 : I2C
+class MPU_6050 : I2C
 {
 public:
 	MPU_6050() : (0x68);
@@ -29,4 +29,15 @@ public:
 	int DyroX();
 	int DyroY();
 	int DyroZ();
+};
+
+class AXDL345 : I2C
+{
+public:
+	AXDL345() : (0x53);
+
+	// Read 
+	int AccelX();
+	int AccelY();
+	int AccelZ();
 };

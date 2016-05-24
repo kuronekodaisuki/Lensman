@@ -128,3 +128,21 @@ int DyroZ()
 {
 	return ReadWord(0x47);
 }
+
+///////////////////////////////////////////////
+// AXDL345
+// Read 
+int AXDL345::AccelX()
+{
+	return ReadWord(0x32);
+}
+
+int AXDL345::AccelY()
+{
+	return ReadWord(0x34);
+}
+
+int AXDL345::AccelZ()
+{
+	return ReadWord(0x36);
+}
