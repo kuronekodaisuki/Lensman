@@ -13,7 +13,7 @@ public:
 	int  ReadWord(char reg_addr);
 };
 
-class MPU_6050 : I2C
+class MPU_6050 : public I2C
 {
 public:
 	MPU_6050();

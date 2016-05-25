@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
@@ -97,35 +98,35 @@ static double toDouble(int value)
 }
 
 // Read 
-double AccelX()
+double MPU_6050::AccelX()
 {
 	int value = ReadWord(0x3B);
 	return toDouble(value);
 }
 
-double AccelY()
+double MPU_6050::AccelY()
 {
 	int value = ReadWord(0x3D);
 	return toDouble(value);
 }
 
-double AccelZ()
+double MPU_6050::AccelZ()
 {
 	int value = ReadWord(0x3F);
 	return toDouble(value);
 }
 
-int DyroX()
+int MPU_6050::DyroX()
 {
 	return ReadWord(0x43);
 }
 
-int DyroY()
+int MPU_6050::DyroY()
 {
 	return ReadWord(0x45);
 }
 
-int DyroZ()
+int MPU_6050::DyroZ()
 {
 	return ReadWord(0x47);
 }
