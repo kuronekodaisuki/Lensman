@@ -1,6 +1,7 @@
 // I2C
 
-#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
@@ -72,7 +73,7 @@ int  I2C::ReadWord(char reg_addr)
 
 ///////////////////////////////////////////////
 // MPU-6050
-MPU_6050::MPU_6050() : (0x68)
+MPU_6050::MPU_6050() : I2C(0x68)
 {
 }
 
@@ -131,7 +132,7 @@ int DyroZ()
 
 ///////////////////////////////////////////////
 // AXDL345
-AXDL345::AXDL345() : (0x53)
+AXDL345::AXDL345() : I2C(0x53)
 {
 }
 

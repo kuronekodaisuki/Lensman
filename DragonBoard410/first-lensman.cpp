@@ -3,9 +3,19 @@
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/ocl/ocl.hpp>
+#include <pthread.h>
 
 using namespace cv;
 using namespace cv::ocl;
+
+#define WIDTH 640
+#define HEIGHT 480
+
+Mat image;
+Mat buffer(HEIGHT, WIDTH, CV_8UC3);
+Ptr<FeatureDetector> detector = FeatureDetector::create("STAR");
+std::vector<KeyPoint> keypoint;
+
 
 void checkOpenCL()
 {
@@ -25,19 +35,22 @@ void checkOpenCL()
 	}
 }
 
+
+void thread_feature(void *arg)
+{
+	wait(1000);
+}
+
 int main(int argc, char* argv[])
 {
 	VideoCapture camera;
+
+	camera.set(CV_CAP_PROP_FRAME_WIDTH, WIDTH);
+	camera.set(CV_CAP_PROP_FRAME_HEIGHT, HEIGHT);
 	camera.open(0);
 
 	checkOpenCL();
 	
-	Ptr<FeatureDetector> detector = FeatureDetector::create("STAR");
-	//
-	std::vector<KeyPoint> keypoint;
-
-	Mat image;
-	Mat buffer(640, 480, CV_8UC3, NULL);
 	for (bool loop = true; loop; )
 	{
 		switch (waitKey(10))
