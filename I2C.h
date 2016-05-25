@@ -16,7 +16,7 @@ public:
 class MPU_6050 : I2C
 {
 public:
-	MPU_6050() : (0x68);
+	MPU_6050();
 
 	void Init();
 	char WhoAmI();
@@ -34,7 +34,7 @@ public:
 class AXDL345 : I2C
 {
 public:
-	AXDL345() : (0x53);
+	AXDL345();
 
 	// Read 
 	int AccelX();

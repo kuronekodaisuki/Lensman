@@ -20,10 +20,10 @@ void I2C::Write(char reg_addr, char data)
 {
 	int fd;
 
-	if ((fd = open(DEV_I2C, O_RDWR) >= 0)
+	if ((fd = open(DEV_I2C, O_RDWR)) >= 0)
 	{
 		int res;
-		if ((res = ioctl(fd, I2C_SLAVE, _device_addr) >= 0)
+		if ((res = ioctl(fd, I2C_SLAVE, _device_addr)) >= 0)
 		{
 			char buffer[2] = {reg_addr, data};
 			write(fd, buffer, 2);
@@ -37,10 +37,10 @@ char I2C::Read(char reg_addr)
 	int fd;
 	char data[1];
 
-	if ((fd = open(DEV_I2C, O_RDWR) >= 0)
+	if ((fd = open(DEV_I2C, O_RDWR)) >= 0)
 	{
 		int res;
-		if ((res = ioctl(fd, I2C_SLAVE, _device_addr) >= 0)
+		if ((res = ioctl(fd, I2C_SLAVE, _device_addr)) >= 0)
 		{
 			char buffer[1] = { reg_addr };
 			write(fd, buffer, 1);
@@ -56,10 +56,10 @@ int  I2C::ReadWord(char reg_addr)
 	int fd;
 	char data[2];
 
-	if ((fd = open(DEV_I2C, O_RDWR) >= 0)
+	if ((fd = open(DEV_I2C, O_RDWR)) >= 0)
 	{
 		int res;
-		if ((res = ioctl(fd, I2C_SLAVE, _device_addr) >= 0)
+		if ((res = ioctl(fd, I2C_SLAVE, _device_addr)) >= 0)
 		{
 			char buffer[1] = { reg_addr };
 			write(fd, buffer, 1);
@@ -72,7 +72,7 @@ int  I2C::ReadWord(char reg_addr)
 
 ///////////////////////////////////////////////
 // MPU-6050
-MPU_6050::MPU_6050()
+MPU_6050::MPU_6050() : (0x68)
 {
 }
 
@@ -131,6 +131,10 @@ int DyroZ()
 
 ///////////////////////////////////////////////
 // AXDL345
+AXDL345::AXDL345() : (0x53)
+{
+}
+
 // Read 
 int AXDL345::AccelX()
 {

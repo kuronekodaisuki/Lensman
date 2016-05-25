@@ -8,7 +8,7 @@ LDFLAGS = -lstdc++ -L/usr/lib/aarch64-linux-gnu/ $(OPENCV_LIB) -lpthread  \
 INCLUDES = -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads \
 		-I/opt/vc/include/interface/vmcs_host/linux -I./$(OMXCAM_HOME)/include
 
-SRC := $(SRC) $(APP).cpp
+SRC := $(SRC) $(APP).cpp I2C.cpp
 OBJS := $(OBJS) $(APP).o
 
 all: $(APP) $(SRC)
