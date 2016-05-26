@@ -5,6 +5,7 @@
 #include <SDL/SDL.h>
 #include <pthread.h>
 #include "omxcam.h"
+#include "I2C.h"
 
 using namespace cv;
 
@@ -23,6 +24,9 @@ static Mat image(HEIGHT, WIDTH, CV_8UC3);
 static Ptr<FeatureDetector> detector;
 static std::vector<KeyPoint> keypoints;
 
+static MPU_6050 mpu6050;
+static AXDL345  axdl345;
+
 inline Uint8 *scanLine(SDL_Surface *surface, int y, int x)
 {
 	return (Uint8 *)(surface->pixels) + (y * surface->pitch) + (surface->format->BytesPerPixel * x);
@@ -39,6 +43,20 @@ void *thread_feature(void *arg)
 
 		//putchar('*');
 		printf("%d ", keypoints.size());
+		usleep(1000 * 100);
+	}
+	return NULL;
+}
+
+void *thread_sensor(void* arg)
+{
+	while (1)
+	{
+		int x, y, z;
+		x = axdl345.AccelX();
+		y = axdl345.AccelY();
+		z = axdl345.AccelZ();
+		printf("X:%d Y:%d Z:%d \n", x, y, z);
 		usleep(1000 * 100);
 	}
 	return NULL;
@@ -108,7 +126,7 @@ int main (int argc, char *argv[])
 	pthread_mutex_init(&mutex, NULL);
 
 	pthread_t thread;
-	pthread_create(&thread, NULL, thread_feature, NULL);
+	pthread_create(&thread, NULL, thread_sensor, NULL);
 
 	//int quit = 0;
 	while (!quit)
