@@ -4,7 +4,6 @@
 #include <opencv2/opencv.hpp>
 #include <SDL/SDL.h>
 #include "omxcam.h"
-#include "omxcam.h"
 
 using namespace cv;
 
@@ -17,7 +16,7 @@ static SDL_Surface *frame;
 static int current = 0;
 
 // OpenCV detect features
-static Mat image;
+static Mat image(HEIGHT, WIDTH, CV_8UC3);
 static Ptr<FeatureDetector> detector;
 static std::vector<KeyPoint> keyPoints;
 
