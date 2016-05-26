@@ -16,10 +16,12 @@ static SDL_Surface *screen;
 static SDL_Surface *frame;
 static int current = 0;
 
+static pthread_mutex_t	mutex;
+
 // OpenCV detect features
 static Mat image(HEIGHT, WIDTH, CV_8UC3);
 static Ptr<FeatureDetector> detector;
-static std::vector<KeyPoint> keyPoints;
+static std::vector<KeyPoint> keypoints;
 
 inline Uint8 *scanLine(SDL_Surface *surface, int y, int x)
 {
@@ -28,9 +30,18 @@ inline Uint8 *scanLine(SDL_Surface *surface, int y, int x)
 
 void *thread_feature(void *arg)
 {
-	printf(".");
-	usleep(1000 * 1000);
-	return arg;
+	while (1)
+	{
+		pthread_mutex_lock(&mutex);
+		memcpy(image.ptr(), frame->pixels, SIZE_OF_FRAME);
+		pthread_mutex_unlock(&mutex);
+		detector->detect(image, keypoints);		
+
+		//putchar('*');
+		printf("%d ", keypoints.size());
+		usleep(1000 * 100);
+	}
+	return NULL;
 }
 
 // Show result
@@ -38,9 +49,16 @@ void show()
 {
 	SDL_Rect srcRect = {0, 0, WIDTH, HEIGHT};
 	SDL_Rect dstRect = {0, 0};
+ 
+	Mat surface(HEIGHT, WIDTH, CV_8UC3, frame->pixels);
+	for (size_t i = 0; i < keypoints.size(); i++)
+	{
+		Point2f pt = keypoints[i].pt;
+		circle(surface, Point(pt.x, pt.y), 3, Scalar(0, 0, 255));
+	}
+	//printf("%d ", keypoints.size());
+
 	SDL_BlitSurface(frame, &srcRect, screen, &dstRect);
-	// Copy to Mat
-	//memcpy(image.ptr(), frame->pixels, SIZE_OF_FRAME);
 	SDL_Flip(screen);
 }
 
@@ -86,6 +104,8 @@ int main (int argc, char *argv[])
 
 	//Start the image streaming
 	omxcam_video_start(&settings, 1000 * 10); //OMXCAM_CAPTURE_FOREVER);
+
+	pthread_mutex_init(&mutex, NULL);
 
 	pthread_t thread;
 	pthread_create(&thread, NULL, thread_feature, NULL);
