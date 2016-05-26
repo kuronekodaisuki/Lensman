@@ -57,7 +57,7 @@ void *thread_sensor(void* arg)
 		x = axdl345.AccelX();
 		y = axdl345.AccelY();
 		z = axdl345.AccelZ();
-		printf("X:%f Y:%f Z:%f \n", x, y, z);
+		printf("X:%8.3f Y:%8.3f Z:%8.3f \n", x, y, z);
 		usleep(1000 * 100);
 	}
 	return NULL;
