@@ -36,8 +36,10 @@ class AXDL345 : I2C
 public:
 	AXDL345();
 
+	void Init();
+
 	// Read 
-	int AccelX();
-	int AccelY();
-	int AccelZ();
+	double AccelX();
+	double AccelY();
+	double AccelZ();
 };

@@ -137,18 +137,23 @@ AXDL345::AXDL345() : I2C(0x53)
 {
 }
 
+void AXDL345::Init()
+{
+	Write(0x2D, 0x08); // POWER_CTL 
+}
+
 // Read 
-int AXDL345::AccelX()
+double AXDL345::AccelX()
 {
-	return ReadWord(0x32);
+	return (ReadWord(0x32) * 3.9) / 1000.0;
 }
 
-int AXDL345::AccelY()
+double AXDL345::AccelY()
 {
-	return ReadWord(0x34);
+	return (ReadWord(0x34) * 3.9) / 1000.0;
 }
 
-int AXDL345::AccelZ()
+double AXDL345::AccelZ()
 {
-	return ReadWord(0x36);
+	return (ReadWord(0x36) * 3.9) / 1000.0;
 }

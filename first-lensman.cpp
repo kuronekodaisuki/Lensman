@@ -50,13 +50,14 @@ void *thread_feature(void *arg)
 
 void *thread_sensor(void* arg)
 {
+	axdl345.Init();
 	while (1)
 	{
-		int x, y, z;
+		double x, y, z;
 		x = axdl345.AccelX();
 		y = axdl345.AccelY();
 		z = axdl345.AccelZ();
-		printf("X:%d Y:%d Z:%d \n", x, y, z);
+		printf("X:%f Y:%f Z:%f \n", x, y, z);
 		usleep(1000 * 100);
 	}
 	return NULL;
