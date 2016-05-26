@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
 #include <SDL/SDL.h>
+#include <pthread.h>
 #include "omxcam.h"
 
 using namespace cv;
@@ -25,12 +26,21 @@ inline Uint8 *scanLine(SDL_Surface *surface, int y, int x)
 	return (Uint8 *)(surface->pixels) + (y * surface->pitch) + (surface->format->BytesPerPixel * x);
 }
 
+void *thread_feature(void *arg)
+{
+	printf(".");
+	usleep(1000 * 1000);
+	return arg;
+}
+
 // Show result
 void show()
 {
 	SDL_Rect srcRect = {0, 0, WIDTH, HEIGHT};
 	SDL_Rect dstRect = {0, 0};
 	SDL_BlitSurface(frame, &srcRect, screen, &dstRect);
+	// Copy to Mat
+	//memcpy(image.ptr(), frame->pixels, SIZE_OF_FRAME);
 	SDL_Flip(screen);
 }
 
@@ -75,7 +85,10 @@ int main (int argc, char *argv[])
 	detector = FeatureDetector::create("STAR");
 
 	//Start the image streaming
-	omxcam_video_start(&settings, OMXCAM_CAPTURE_FOREVER);
+	omxcam_video_start(&settings, 1000 * 10); //OMXCAM_CAPTURE_FOREVER);
+
+	pthread_t thread;
+	pthread_create(&thread, NULL, thread_feature, NULL);
 
 	//int quit = 0;
 	while (!quit)
@@ -96,7 +109,7 @@ int main (int argc, char *argv[])
 			}
 		}
 	}
-  
+ 	 
 	SDL_Quit();
 	return 0;
 }
