@@ -1,4 +1,6 @@
 // I2C,h
+#include <stdint.h>
+#include <time.h>
 #include "KalmanFilter/Kalman.h"
 
 class I2C
@@ -24,7 +26,7 @@ public:
 protected:
 	double accX, accY, accZ;
 	double gyroX, gyroY, gyroZ;
-	uint32_t timer;
+	struct timespec timer;
 	Kalman kalmanX;
 	Kalman kalmanY;
 	Kalman kalmanZ;

@@ -7,7 +7,7 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 #include <math.h>
-
+#include <time.h>
 #include "I2C.h"
 
 #define DEV_I2C	"/dev/i2c-1"
@@ -117,14 +117,14 @@ bool MPU_6050::Init()
 		return false;
 	else
 	{
-		delay(100); // Wait for sensor to stabilize
+		usleep(100); // Wait for sensor to stabilize
 		accX = AccelX();
 		accY = AccelY();
 		accZ = AccelZ();
 		gyroX = GyroX();
 		gyroY = GyroY();
 		gyroZ = GyroZ();
-		timer = micros();
+		clock_gettime(CLOCK_REALTIME, &timer);
 
 		// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
 		// atan2 outputs the value of -ƒÎ to ƒÎ (radians) - see http://en.wikipedia.org/wiki/Atan2
@@ -152,8 +152,14 @@ void MPU_6050::Next()
 	gyroY = GyroY();
 	gyroZ = GyroZ();
 
-	double dt = (double)(micros() - timer) / 1000000; // Calculate delta time
-	timer = micros();
+	struct timespec time;
+	clock_gettime(CLOCK_REALTIME, &time);
+	
+	double start = timer.tv_sec + (double)timer.tv_nsec / 1000000000;
+	double now = time.tv_sec + (double)time.tv_nsec / 1000000000;  
+	// Calculate delta time
+	double dt = now - start;
+	clock_gettime(CLOCK_REALTIME, &timer);
 
 	// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
 	// atan2 outputs the value of -ƒÎ to ƒÎ (radians) - see http://en.wikipedia.org/wiki/Atan2
