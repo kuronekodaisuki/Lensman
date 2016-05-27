@@ -11,6 +11,7 @@
 #include "I2C.h"
 
 #define DEV_I2C	"/dev/i2c-1"
+#define RAD_TO_DEG	(180 / 3.1415926)
 
 // Constructor
 I2C::I2C(char device_addr)
@@ -29,6 +30,23 @@ void I2C::Write(char reg_addr, char data)
 		{
 			char buffer[2] = {reg_addr, data};
 			write(fd, buffer, 2);
+		}
+		close(fd);
+	}
+}
+
+void I2C::Write(char reg_addr, char* data, int size)
+{
+	int fd;
+
+	if ((fd = open(DEV_I2C, O_RDWR)) >= 0)
+	{
+		int res;
+		if ((res = ioctl(fd, I2C_SLAVE, _device_addr)) >= 0)
+		{
+			char buffer[1] = { reg_addr };
+			write(fd, buffer, 1);
+			write(fd, data, size);
 		}
 		close(fd);
 	}
@@ -83,10 +101,103 @@ char MPU_6050::WhoAmI()
 	return Read(0x75); // WHO_AM_I
 }
 
-void MPU_6050::Init()
+bool MPU_6050::Init()
 {
+	char initial[4] = {
+		7, // Set the sample rate to 1000Hz - 8kHz/(7+1) = 1000Hz
+		0, // Disable FSYNC and set 260 Hz Acc filtering, 256 Hz Gyro filtering, 8 KHz sampling
+		0, // Set Gyro Full Scale Range to Å}250deg/s
+		0  // Set Accelerometer Full Scale Range to Å}2g
+	};
+	Write(0x19, initial, 4);
 	Write(0x26, 0x06); // I2C_SLV0_REG 
-	Write(0x6B, 0x00); // PWR_MGMT_1
+	Write(0x6B, 0x01); // PLL with X axis gyroscope reference and disable sleep mode
+
+	if (WhoAmI() != 0x68)
+		return false;
+	else
+	{
+		delay(100); // Wait for sensor to stabilize
+		accX = AccelX();
+		accY = AccelY();
+		accZ = AccelZ();
+		gyroX = GyroX();
+		gyroY = GyroY();
+		gyroZ = GyroZ();
+		timer = micros();
+
+		// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
+		// atan2 outputs the value of -ÉŒ to ÉŒ (radians) - see http://en.wikipedia.org/wiki/Atan2
+		// It is then converted from radians to degrees
+#ifdef RESTRICT_PITCH // Eq. 25 and 26
+		roll = atan2(accY, accZ) * RAD_TO_DEG;
+		pitch = atan(-accX / sqrt(accY * accY + accZ * accZ)) * RAD_TO_DEG;
+#else // Eq. 28 and 29
+		roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
+		pitch = atan2(-accX, accZ) * RAD_TO_DEG;
+#endif
+		kalmanX.setAngle(roll); // Set starting angle
+		kalmanY.setAngle(pitch);
+
+		return true;
+	}
+}
+
+void MPU_6050::Next()
+{
+	accX = AccelX();
+	accY = AccelY();
+	accZ = AccelZ();
+	gyroX = GyroX();
+	gyroY = GyroY();
+	gyroZ = GyroZ();
+
+	double dt = (double)(micros() - timer) / 1000000; // Calculate delta time
+	timer = micros();
+
+	// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
+	// atan2 outputs the value of -ÉŒ to ÉŒ (radians) - see http://en.wikipedia.org/wiki/Atan2
+	// It is then converted from radians to degrees
+#ifdef RESTRICT_PITCH // Eq. 25 and 26
+	roll = atan2(accY, accZ) * RAD_TO_DEG;
+	pitch = atan(-accX / sqrt(accY * accY + accZ * accZ)) * RAD_TO_DEG;
+#else // Eq. 28 and 29
+	roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
+	pitch = atan2(-accX, accZ) * RAD_TO_DEG;
+#endif
+
+	double gyroXrate = gyroX / 131.0; // Convert to deg/s
+	double gyroYrate = gyroY / 131.0; // Convert to deg/s
+
+#ifdef RESTRICT_PITCH
+	// This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
+	if ((roll < -90 && kalAngleX > 90) || (roll > 90 && kalAngleX < -90)) {
+		kalmanX.setAngle(roll);
+		//compAngleX = roll;
+		//kalAngleX = roll;
+		//gyroXangle = roll;
+	}
+	else
+		kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt); // Calculate the angle using a Kalman filter
+
+	if (abs(kalAngleX) > 90)
+		gyroYrate = -gyroYrate; // Invert rate, so it fits the restriced accelerometer reading
+	kalAngleY = kalmanY.getAngle(pitch, gyroYrate, dt);
+#else
+	// This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
+	if ((pitch < -90 && kalAngleY > 90) || (pitch > 90 && kalAngleY < -90)) {
+		kalmanY.setAngle(pitch);
+		//compAngleY = pitch;
+		//kalAngleY = pitch;
+		//gyroYangle = pitch;
+	}
+	else
+		kalAngleY = kalmanY.getAngle(pitch, gyroYrate, dt); // Calculate the angle using a Kalman filter
+
+	if (abs(kalAngleY) > 90)
+		gyroXrate = -gyroXrate; // Invert rate, so it fits the restriced accelerometer reading
+	kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt); // Calculate the angle using a Kalman filter
+#endif
 }
 
 static double toDouble(int value)
@@ -116,17 +227,17 @@ double MPU_6050::AccelZ()
 	return toDouble(value);
 }
 
-int MPU_6050::DyroX()
+int MPU_6050::GyroX()
 {
 	return ReadWord(0x43);
 }
 
-int MPU_6050::DyroY()
+int MPU_6050::GyroY()
 {
 	return ReadWord(0x45);
 }
 
-int MPU_6050::DyroZ()
+int MPU_6050::GyroZ()
 {
 	return ReadWord(0x47);
 }
@@ -137,9 +248,10 @@ AXDL345::AXDL345() : I2C(0x53)
 {
 }
 
-void AXDL345::Init()
+bool AXDL345::Init()
 {
 	Write(0x2D, 0x08); // POWER_CTL 
+	return true;
 }
 
 // Read 

@@ -1,4 +1,5 @@
 // I2C,h
+#include "KalmanFilter/Kalman.h"
 
 class I2C
 {
@@ -9,6 +10,7 @@ public:
 	I2C(char device_addr);
 
 	void Write(char reg_addr, char data);
+	void Write(char reg_addr, char* data, int size);
 	char Read(char reg_addr);
 	int  ReadWord(char reg_addr);
 };
@@ -16,9 +18,21 @@ public:
 class MPU_6050 : public I2C
 {
 public:
+	double roll, pitch, yaw;
+	double kalAngleX, kalAngleY, kalAngleZ;
+
+protected:
+	double accX, accY, accZ;
+	double gyroX, gyroY, gyroZ;
+	uint32_t timer;
+	Kalman kalmanX;
+	Kalman kalmanY;
+	Kalman kalmanZ;
+
+public:
 	MPU_6050();
 
-	void Init();
+	bool Init();
 	char WhoAmI();
 
 	// Read 
@@ -26,9 +40,11 @@ public:
 	double AccelY();
 	double AccelZ();
 
-	int DyroX();
-	int DyroY();
-	int DyroZ();
+	int GyroX();
+	int GyroY();
+	int GyroZ();
+
+	void Next();
 };
 
 class AXDL345 : I2C
@@ -36,7 +52,7 @@ class AXDL345 : I2C
 public:
 	AXDL345();
 
-	void Init();
+	bool Init();
 
 	// Read 
 	double AccelX();
