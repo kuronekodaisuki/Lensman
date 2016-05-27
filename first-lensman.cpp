@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include "omxcam.h"
 #include "I2C.h"
+#include "KalmanFilter/Kalman.h"
 
 using namespace cv;
 
