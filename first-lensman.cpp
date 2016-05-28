@@ -42,6 +42,14 @@ void *thread_feature(void *arg)
 		pthread_mutex_unlock(&mutex);
 		detector->detect(image, keypoints);		
 
+		Mat surface(HEIGHT, WIDTH, CV_8UC3, frame->pixels);
+		for (size_t i = 0; i < keypoints.size(); i++)
+		{
+			Point2f pt = keypoints[i].pt;
+			circle(surface, Point(pt.x, pt.y), 3, Scalar(0, 0, 255));
+		}
+		imshow("Feature", surface);
+
 		//putchar('*');
 		printf("%d ", keypoints.size());
 		usleep(1000 * 100);
