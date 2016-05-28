@@ -51,13 +51,13 @@ void *thread_feature(void *arg)
 
 void *thread_sensor(void* arg)
 {
-	axdl345.Init();
+	mpu6050.Init();
 	while (1)
 	{
 		double x, y, z;
-		x = axdl345.AccelX();
-		y = axdl345.AccelY();
-		z = axdl345.AccelZ();
+		x = mpu6050.AccelX();
+		y = mpu6050.AccelY();
+		z = mpu6050.AccelZ();
 		printf("X:%8.3f Y:%8.3f Z:%8.3f \n", x, y, z);
 		usleep(1000 * 100);
 	}

@@ -6,10 +6,10 @@ OPENCV_LIB = -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_highgui -
 LDFLAGS = -lstdc++ -L/usr/lib/aarch64-linux-gnu/ $(OPENCV_LIB) -lpthread  \
 		 
 INCLUDES = -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads \
-		-I/opt/vc/include/interface/vmcs_host/linux -I./$(OMXCAM_HOME)/include
+		-I/opt/vc/include/interface/vmcs_host/linux -I../KalmanFilter -I../
 
-SRC := $(SRC) $(APP).cpp
-OBJS := $(OBJS) $(APP).o
+SRC := $(SRC) $(APP).cpp ../I2C.cpp ../KalmanFilter/Kalman.cpp
+OBJS := $(OBJS) $(APP).o I2C.o Kalman.o
 
 all: $(APP) $(SRC)
 

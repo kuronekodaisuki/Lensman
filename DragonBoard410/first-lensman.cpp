@@ -4,6 +4,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/ocl/ocl.hpp>
 #include <pthread.h>
+#include "I2C.h"
+#include "KalmanFilter/Kalman.h"
 
 using namespace cv;
 using namespace cv::ocl;
@@ -16,6 +18,9 @@ Mat buffer(HEIGHT, WIDTH, CV_8UC3);
 Ptr<FeatureDetector> detector = FeatureDetector::create("STAR");
 std::vector<KeyPoint> keypoint;
 
+static pthread_mutex_t	mutex;
+static MPU_6050 mpu6050;
+static AXDL345  axdl345;
 
 void checkOpenCL()
 {
@@ -36,10 +41,27 @@ void checkOpenCL()
 }
 
 
-void thread_feature(void *arg)
+void *thread_feature(void *arg)
 {
-	wait(1000);
+	usleep(1000 * 100);
+	return NULL;
 }
+
+void *thread_sensor(void* arg)
+{
+	mpu6050.Init();
+	while (1)
+	{
+		double x, y, z;
+		x = mpu6050.AccelX();
+		y = mpu6050.AccelY();
+		z = mpu6050.AccelZ();
+		printf("X:%8.3f Y:%8.3f Z:%8.3f \n", x, y, z);
+		usleep(1000 * 100);
+	}
+	return NULL;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -51,6 +73,9 @@ int main(int argc, char* argv[])
 
 	checkOpenCL();
 	
+	pthread_t thread;
+	pthread_create(&thread, NULL, thread_sensor, NULL);
+
 	for (bool loop = true; loop; )
 	{
 		switch (waitKey(10))
