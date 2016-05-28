@@ -11,7 +11,7 @@
 #include "I2C.h"
 
 #define DEV_I2C	"/dev/i2c-1"
-#define RAD_TO_DEG	(180 / 3.1415926)
+const double RAD_TO_DEG = (180 / 3.14159265359);
 
 // Constructor
 I2C::I2C(char device_addr)
@@ -101,6 +101,21 @@ char MPU_6050::WhoAmI()
 	return Read(0x75); // WHO_AM_I
 }
 
+// Calc Roll, Pitch and Yaw
+void MPU_6050::CalcRPY()
+{
+	// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
+	// atan2 outputs the value of -ƒÎ to ƒÎ (radians) - see http://en.wikipedia.org/wiki/Atan2
+	// It is then converted from radians to degrees
+#ifdef RESTRICT_PITCH // Eq. 25 and 26
+	roll = atan2(accY, accZ) * RAD_TO_DEG;
+	pitch = atan(-accX / sqrt(accY * accY + accZ * accZ)) * RAD_TO_DEG;
+#else // Eq. 28 and 29
+	roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
+	pitch = atan2(-accX, accZ) * RAD_TO_DEG;
+#endif
+}
+
 bool MPU_6050::Init()
 {
 	char initial[4] = {
@@ -126,16 +141,8 @@ bool MPU_6050::Init()
 		gyroZ = GyroZ();
 		clock_gettime(CLOCK_REALTIME, &timer);
 
-		// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
-		// atan2 outputs the value of -ƒÎ to ƒÎ (radians) - see http://en.wikipedia.org/wiki/Atan2
-		// It is then converted from radians to degrees
-#ifdef RESTRICT_PITCH // Eq. 25 and 26
-		roll = atan2(accY, accZ) * RAD_TO_DEG;
-		pitch = atan(-accX / sqrt(accY * accY + accZ * accZ)) * RAD_TO_DEG;
-#else // Eq. 28 and 29
-		roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
-		pitch = atan2(-accX, accZ) * RAD_TO_DEG;
-#endif
+		CalcRPY();
+
 		kalmanX.setAngle(roll); // Set starting angle
 		kalmanY.setAngle(pitch);
 
@@ -161,16 +168,7 @@ void MPU_6050::Next()
 	double dt = now - start;
 	clock_gettime(CLOCK_REALTIME, &timer);
 
-	// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
-	// atan2 outputs the value of -ƒÎ to ƒÎ (radians) - see http://en.wikipedia.org/wiki/Atan2
-	// It is then converted from radians to degrees
-#ifdef RESTRICT_PITCH // Eq. 25 and 26
-	roll = atan2(accY, accZ) * RAD_TO_DEG;
-	pitch = atan(-accX / sqrt(accY * accY + accZ * accZ)) * RAD_TO_DEG;
-#else // Eq. 28 and 29
-	roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
-	pitch = atan2(-accX, accZ) * RAD_TO_DEG;
-#endif
+	CalcRPY();
 
 	double gyroXrate = gyroX / 131.0; // Convert to deg/s
 	double gyroYrate = gyroY / 131.0; // Convert to deg/s
@@ -179,9 +177,6 @@ void MPU_6050::Next()
 	// This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
 	if ((roll < -90 && kalAngleX > 90) || (roll > 90 && kalAngleX < -90)) {
 		kalmanX.setAngle(roll);
-		//compAngleX = roll;
-		//kalAngleX = roll;
-		//gyroXangle = roll;
 	}
 	else
 		kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt); // Calculate the angle using a Kalman filter
@@ -193,9 +188,6 @@ void MPU_6050::Next()
 	// This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
 	if ((pitch < -90 && kalAngleY > 90) || (pitch > 90 && kalAngleY < -90)) {
 		kalmanY.setAngle(pitch);
-		//compAngleY = pitch;
-		//kalAngleY = pitch;
-		//gyroYangle = pitch;
 	}
 	else
 		kalAngleY = kalmanY.getAngle(pitch, gyroYrate, dt); // Calculate the angle using a Kalman filter

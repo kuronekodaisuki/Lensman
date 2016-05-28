@@ -30,6 +30,7 @@ protected:
 	Kalman kalmanX;
 	Kalman kalmanY;
 	Kalman kalmanZ;
+	void CalcRPY();
 
 public:
 	MPU_6050();
