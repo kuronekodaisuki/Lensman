@@ -1,6 +1,8 @@
 #ifndef QUATERNION_INCLUDED
 #define QUATERNION_INCLUDED
 
+#include <math.h>
+
 class Quaternion {
 public:
 	float w;
@@ -181,6 +183,32 @@ public:
 		return r;
 	}
 };
+
+/**
+ *  @brief Calc gravity
+ *  @param[out] vector
+ *  @param[in]  quaternion
+ */
+void GetGravity(VectorFloat *v, Quaternion *q) {
+	v->x = 2 * (q->x*q->z - q->w*q->y);
+	v->y = 2 * (q->w*q->x + q->y*q->z);
+	v->z = q->w*q->w - q->x*q->x - q->y*q->y + q->z*q->z;
+}
+
+/**
+ *  @brief Calc yaw, pitch and roll
+ *  @param[out] data yaw pitch roll
+ *  @param[in]  quaternion
+ *  @param[in]  gravity
+ */
+void GetYawPitchRoll(float *data, Quaternion *q, VectorFloat *gravity) {
+	// yaw: (about Z axis)
+	data[0] = atan2(2 * q->x*q->y - 2 * q->w*q->z, 2 * q->w*q->w + 2 * q->x*q->x - 1);
+	// pitch: (nose up/down, about Y axis)
+	data[1] = atan(gravity->x / sqrt(gravity->y*gravity->y + gravity->z*gravity->z));
+	// roll: (tilt left/right, about X axis)
+	data[2] = atan(gravity->y / sqrt(gravity->x*gravity->x + gravity->z*gravity->z));
+}
 
 #endif //QUATERNION_INCLUDED
 
