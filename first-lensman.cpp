@@ -14,6 +14,7 @@ using namespace cv;
 #define WIDTH 640
 #define HEIGHT 480
 #define SIZE_OF_FRAME (WIDTH * HEIGHT * 3)
+#define INTERVAL	10 // msec
 
 static SDL_Surface *screen;
 static SDL_Surface *frame;
@@ -53,7 +54,7 @@ void *thread_feature(void *arg)
 
 		//putchar('*');
 		printf("%d ", keypoints.size());
-		usleep(1000 * 100);
+		usleep(1000 * 100);	// 100msec
 	}
 	return NULL;
 }
@@ -70,12 +71,12 @@ void *thread_sensor(void* arg)
 		x = mpu6050.accelX();
 		y = mpu6050.accelY();
 		z = mpu6050.accelZ();
-		xSpeed += x;
-		ySpeed += y;
-		zSpeed += z;
-		X += xSpeed;
-		Y += ySpeed;
-		Z += zSpeed;
+		xSpeed += x * INTERVAL / 1000;
+		ySpeed += y * INTERVAL / 1000;
+		zSpeed += z * INTERVAL / 1000;
+		X += xSpeed * INTERVAL / 1000;
+		Y += ySpeed * INTERVAL / 1000;
+		Z += zSpeed * INTERVAL / 1000;
 		Quaternion q(0.0, x, y, z);
 		VectorFloat vector[3];
 		GetGravity(vector, &q);
@@ -84,7 +85,7 @@ void *thread_sensor(void* arg)
 		//mpu6050.Next();
 		printf("X:%8.5f Y:%8.5f Z:%8.5f %8.5f %8.5f %8.5f\n", 
 			x, y, z, X, Y, Z);
-		usleep(1000 * 100);
+		usleep(1000 * INTERVAL);
 	}
 	return NULL;
 }
