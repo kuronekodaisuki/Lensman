@@ -26,6 +26,7 @@ public:
 protected:
 	double accX, accY, accZ;
 	double gyroX, gyroY, gyroZ;
+	double adjX, adjY, adjZ; // adjustment factor;
 	struct timespec timer;
 	Kalman kalmanX;
 	Kalman kalmanY;
@@ -39,13 +40,17 @@ public:
 	char WhoAmI();
 
 	// Read 
-	double AccelX();
-	double AccelY();
-	double AccelZ();
+	double AccelX(bool adjust = true);
+	double AccelY(bool adjust = true);
+	double AccelZ(bool adjust = true);
 
-	int GyroX();
-	int GyroY();
-	int GyroZ();
+	int GyroX(bool adjust = true);
+	int GyroY(bool adjust = true);
+	int GyroZ(bool adjust = true);
+
+	double accelX();	// G
+	double accelY();	// G
+	double accelZ();	// G
 
 	void Next();
 };

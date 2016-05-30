@@ -12,6 +12,7 @@
 
 #define DEV_I2C	"/dev/i2c-1"
 const double RAD_TO_DEG = (180 / 3.14159265359);
+const double GRAVITATIONAL_ACCELERATION = 9.80665;
 
 // Constructor
 I2C::I2C(char device_addr)
@@ -101,20 +102,73 @@ char MPU_6050::WhoAmI()
 	return Read(0x75); // WHO_AM_I
 }
 
-// Calc Roll, Pitch and Yaw
-void MPU_6050::CalcRPY()
+static double toDouble(int value)
 {
-	// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
-	// atan2 outputs the value of -ƒÎ to ƒÎ (radians) - see http://en.wikipedia.org/wiki/Atan2
-	// It is then converted from radians to degrees
-#ifdef RESTRICT_PITCH // Eq. 25 and 26
-	roll = atan2(accY, accZ) * RAD_TO_DEG;
-	pitch = atan(-accX / sqrt(accY * accY + accZ * accZ)) * RAD_TO_DEG;
-#else // Eq. 28 and 29
-	roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
-	pitch = atan2(-accX, accZ) * RAD_TO_DEG;
-#endif
+	if (value < 0x8000)
+		return (double)value;
+	else
+		return -(double)(0x10000 - value);
 }
+
+// Read 
+double MPU_6050::AccelX(bool adjust)
+{
+	int value = ReadWord(0x3B);
+	if (adjust)
+		return toDouble(value) - ajdX;
+	else
+		return toDouble(value);
+}
+
+double MPU_6050::AccelY(bool adjust)
+{
+	int value = ReadWord(0x3D);
+	if (adjust)
+		return toDouble(value) - ajdY;
+	else
+		return toDouble(value);
+}
+
+double MPU_6050::AccelZ(bool adjust)
+{
+	int value = ReadWord(0x3F);
+	if (adjust)
+		return toDouble(value) - ajdZ;
+	else
+		return toDouble(value);
+}
+
+double MPU_6050::accelX()
+{
+	return AccelX() / 16384 * GRAVITATIONAL_ACCELERATION;
+}
+
+double MPU_6050::accelY()
+{
+	return AccelY() / 16384 * GRAVITATIONAL_ACCELERATION;
+}
+
+double MPU_6050::accelZ()
+{
+	return AccelZ() / 16384 * GRAVITATIONAL_ACCELERATION;
+}
+
+int MPU_6050::GyroX(bool adjust)
+{
+	return ReadWord(0x43);
+}
+
+int MPU_6050::GyroY(bool adjust)
+{
+	return ReadWord(0x45);
+}
+
+int MPU_6050::GyroZbool adjust()
+{
+	return ReadWord(0x47);
+}
+
+
 
 bool MPU_6050::Init()
 {
@@ -133,6 +187,20 @@ bool MPU_6050::Init()
 	else
 	{
 		usleep(100); // Wait for sensor to stabilize
+
+		// Get adjustment factor
+		adjX = adjY = adjZ = 0.0;
+		for (int i = 0; i < 20; i++)
+		{
+			adjX += AccelX(false);
+			adjY += AccelY(false);
+			adjZ += AccelZ(false);
+			usleep(1000 * 10);	// 10msec
+		}
+		adjX /= 20;
+		adjY /= 20;
+		adjZ /= 20;
+
 		accX = AccelX();
 		accY = AccelY();
 		accZ = AccelZ();
@@ -149,6 +217,7 @@ bool MPU_6050::Init()
 		return true;
 	}
 }
+
 
 void MPU_6050::Next()
 {
@@ -198,47 +267,21 @@ void MPU_6050::Next()
 #endif
 }
 
-static double toDouble(int value)
+// Calc Roll, Pitch and Yaw
+void MPU_6050::CalcRPY()
 {
-	if (value < 0x8000)
-		return (double)value;
-	else
-		return (double)((int)(0x10000 - value) * -1);
+	// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
+	// atan2 outputs the value of -ƒÎ to ƒÎ (radians) - see http://en.wikipedia.org/wiki/Atan2
+	// It is then converted from radians to degrees
+#ifdef RESTRICT_PITCH // Eq. 25 and 26
+	roll = atan2(accY, accZ) * RAD_TO_DEG;
+	pitch = atan(-accX / sqrt(accY * accY + accZ * accZ)) * RAD_TO_DEG;
+#else // Eq. 28 and 29
+	roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
+	pitch = atan2(-accX, accZ) * RAD_TO_DEG;
+#endif
 }
 
-// Read 
-double MPU_6050::AccelX()
-{
-	int value = ReadWord(0x3B);
-	return toDouble(value);
-}
-
-double MPU_6050::AccelY()
-{
-	int value = ReadWord(0x3D);
-	return toDouble(value);
-}
-
-double MPU_6050::AccelZ()
-{
-	int value = ReadWord(0x3F);
-	return toDouble(value);
-}
-
-int MPU_6050::GyroX()
-{
-	return ReadWord(0x43);
-}
-
-int MPU_6050::GyroY()
-{
-	return ReadWord(0x45);
-}
-
-int MPU_6050::GyroZ()
-{
-	return ReadWord(0x47);
-}
 
 ///////////////////////////////////////////////
 // AXDL345

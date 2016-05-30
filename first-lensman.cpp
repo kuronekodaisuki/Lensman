@@ -64,16 +64,16 @@ void *thread_sensor(void* arg)
 	while (1)
 	{
 		double x, y, z;
-		x = mpu6050.AccelX();
-		y = mpu6050.AccelY();
-		z = mpu6050.AccelZ();
+		x = mpu6050.accelX();
+		y = mpu6050.accelY();
+		z = mpu6050.accelZ();
 		Quaternion q(0.0, x, y, z);
 		VectorFloat vector[3];
 		GetGravity(vector, &q);
 		float ypr[3];
 		GetYawPitchRoll(ypr, &q, vector);
 		//mpu6050.Next();
-		printf("X:%8.3f Y:%8.3f Z:%8.3f %8.3f %8.3f %8.3f\n", 
+		printf("X:%8.5f Y:%8.5f Z:%8.5f %8.5f %8.5f %8.5f\n", 
 			x, y, z, ypr[0], ypr[1], ypr[2]);
 		usleep(1000 * 100);
 	}
