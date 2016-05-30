@@ -64,9 +64,18 @@ void *thread_sensor(void* arg)
 	while (1)
 	{
 		double x, y, z;
+		double xSpeed = 0, ySpeed = 0, zSpeed = 0;
+		double X = 0, Y = 0, Z = 0;
+
 		x = mpu6050.accelX();
 		y = mpu6050.accelY();
 		z = mpu6050.accelZ();
+		xSpeed += x;
+		ySpeed += y;
+		zSpeed += z;
+		X += xSpeed;
+		Y += ySpeed;
+		Z += zSpeed;
 		Quaternion q(0.0, x, y, z);
 		VectorFloat vector[3];
 		GetGravity(vector, &q);
@@ -74,7 +83,7 @@ void *thread_sensor(void* arg)
 		GetYawPitchRoll(ypr, &q, vector);
 		//mpu6050.Next();
 		printf("X:%8.5f Y:%8.5f Z:%8.5f %8.5f %8.5f %8.5f\n", 
-			x, y, z, ypr[0], ypr[1], ypr[2]);
+			x, y, z, X, Y, Z);
 		usleep(1000 * 100);
 	}
 	return NULL;
