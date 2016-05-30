@@ -7,6 +7,7 @@
 #include "omxcam.h"
 #include "I2C.h"
 #include "KalmanFilter/Kalman.h"
+#include "Quaternion.h"
 
 using namespace cv;
 
@@ -66,7 +67,14 @@ void *thread_sensor(void* arg)
 		x = mpu6050.AccelX();
 		y = mpu6050.AccelY();
 		z = mpu6050.AccelZ();
-		printf("X:%8.3f Y:%8.3f Z:%8.3f \n", x, y, z);
+		Quaternion q(0.0, x, y, z);
+		VectorFloat vector[3];
+		GetGravity(vector, &q);
+		float ypr[3];
+		GetYawPitchRoll(ypr, &q, vector);
+		//mpu6050.Next();
+		printf("X:%8.3f Y:%8.3f Z:%8.3f %8.3f %8.3f %8.3f\n", 
+			x, y, z, ypr[0], ypr[1], ypr[2]);
 		usleep(1000 * 100);
 	}
 	return NULL;
@@ -131,7 +139,7 @@ int main (int argc, char *argv[])
 	detector = FeatureDetector::create("STAR");
 
 	//Start the image streaming
-	omxcam_video_start(&settings, 1000 * 10); //OMXCAM_CAPTURE_FOREVER);
+	omxcam_video_start(&settings, 1000 * 1); //OMXCAM_CAPTURE_FOREVER);
 
 	pthread_mutex_init(&mutex, NULL);
 
