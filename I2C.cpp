@@ -115,7 +115,7 @@ double MPU_6050::AccelX(bool adjust)
 {
 	int value = ReadWord(0x3B);
 	if (adjust)
-		return toDouble(value) - ajdX;
+		return toDouble(value) - adjX;
 	else
 		return toDouble(value);
 }
@@ -124,7 +124,7 @@ double MPU_6050::AccelY(bool adjust)
 {
 	int value = ReadWord(0x3D);
 	if (adjust)
-		return toDouble(value) - ajdY;
+		return toDouble(value) - adjY;
 	else
 		return toDouble(value);
 }
@@ -133,7 +133,7 @@ double MPU_6050::AccelZ(bool adjust)
 {
 	int value = ReadWord(0x3F);
 	if (adjust)
-		return toDouble(value) - ajdZ;
+		return toDouble(value) - adjZ;
 	else
 		return toDouble(value);
 }
@@ -163,7 +163,7 @@ int MPU_6050::GyroY(bool adjust)
 	return ReadWord(0x45);
 }
 
-int MPU_6050::GyroZbool adjust()
+int MPU_6050::GyroZ(bool adjust)
 {
 	return ReadWord(0x47);
 }
@@ -201,6 +201,7 @@ bool MPU_6050::Init()
 		adjY /= 20;
 		adjZ /= 20;
 
+		printf("ADJUST %f %f %f\n", adjX, adjY, adjZ);
 		accX = AccelX();
 		accY = AccelY();
 		accZ = AccelZ();
