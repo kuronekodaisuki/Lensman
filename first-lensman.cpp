@@ -2,11 +2,12 @@
 
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/video/tracking.hpp>	// Kalman filter defined here
 #include <SDL/SDL.h>
 #include <pthread.h>
 #include "omxcam.h"
 #include "I2C.h"
-#include "KalmanFilter/Kalman.h"
+//#include "KalmanFilter/Kalman.h"
 #include "Quaternion.h"
 
 using namespace cv;
@@ -26,6 +27,8 @@ static pthread_mutex_t	mutex;
 static Mat image(HEIGHT, WIDTH, CV_8UC3);
 static Ptr<FeatureDetector> detector;
 static std::vector<KeyPoint> keypoints;
+static KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
+static Mat_<double> measurement(3, 1); measurement.setTo(Scalar(0));
 
 static MPU_6050 mpu6050;
 static AXDL345  axdl345;
@@ -62,15 +65,33 @@ void *thread_feature(void *arg)
 void *thread_sensor(void* arg)
 {
 	mpu6050.Init();
+	kalman.transitionMatrix = *(Mat_<double>(4, 4) << 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+	kalman.statePre.at<double>(0) = mpu6050.AccelX();
+	kalman.statePre.at<double>(1) = mpu6050.AccelY();
+	kalman.statePre.at<double>(2) = mpu6050.AccelZ();
+	kalman.statePre.at<double>(3) = 0.0;
+	setIdentity(kalman.measurementMatrix);
+	setIdentity(kalman.processNoiseCov, Scalar::all(1e-4));
+	setIdentity(kalman.measurementNoiseCov, Scalar::all(10));
+	setIdentity(kalman.errorCovPost, Scalar::all(.1));
+
 	while (1)
 	{
 		double x, y, z;
 		double xSpeed = 0, ySpeed = 0, zSpeed = 0;
 		double X = 0, Y = 0, Z = 0;
 
+		kalman.predict();
+
 		x = mpu6050.accelX();
 		y = mpu6050.accelY();
 		z = mpu6050.accelZ();
+
+		measurement(0) = x;
+		measurement(1) = y;
+		measurement(2) = z;
+		Mat estimated = kalman.correct(measurement);
+		
 		xSpeed += x * INTERVAL / 1000;
 		ySpeed += y * INTERVAL / 1000;
 		zSpeed += z * INTERVAL / 1000;
@@ -83,8 +104,8 @@ void *thread_sensor(void* arg)
 		float ypr[3];
 		GetYawPitchRoll(ypr, &q, vector);
 		//mpu6050.Next();
-		printf("X:%8.5f Y:%8.5f Z:%8.5f %8.5f %8.5f %8.5f\n", 
-			x, y, z, X, Y, Z);
+		printf("%8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f\n", 
+			x, y, z, estimated.at<double>(0), estimated.at<double>(1), estimated.at<double>(2), X, Y, Z);
 		usleep(1000 * INTERVAL);
 	}
 	return NULL;
