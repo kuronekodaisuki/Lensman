@@ -67,7 +67,12 @@ void *thread_sensor(void* arg)
 	mpu6050.Init();
 
 	measurement.setTo(Scalar(0));
-	kalman.transitionMatrix = *(Mat_<float>(4, 4) << 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+	kalman.transitionMatrix = 
+		*(Mat_<float>(4, 4) << 
+		1, 0, 1, 0, 
+		0, 1, 0, 1, 
+		0, 0, 1, 0, 
+		0, 0, 0, 1);
 	kalman.statePre.at<float>(0) = mpu6050.AccelX();
 	kalman.statePre.at<float>(1) = mpu6050.AccelY();
 	kalman.statePre.at<float>(2) = mpu6050.AccelZ();
@@ -94,12 +99,12 @@ void *thread_sensor(void* arg)
 		measurement(2) = z;
 		Mat estimated = kalman.correct(measurement);
 		
-		xSpeed += estimated.at<float>(0) * INTERVAL / 1000;
+		xSpeed += estimated.at<float>(0) * INTERVAL / 1000; // speed m/s
 		ySpeed += estimated.at<float>(1) * INTERVAL / 1000;
 		zSpeed += estimated.at<float>(2) * INTERVAL / 1000;
-		X += xSpeed * 1000;
-		Y += ySpeed * 1000;
-		Z += zSpeed * 1000;
+		X += xSpeed * INTERVAL; // speed * INTERVAL / 1000 * 1000 displacement in mm
+		Y += ySpeed * INTERVAL;
+		Z += zSpeed * INTERVAL;
 		Quaternion q(0.0, x, y, z);
 		VectorFloat vector[3];
 		GetGravity(vector, &q);
