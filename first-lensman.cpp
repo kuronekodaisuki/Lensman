@@ -28,7 +28,7 @@ static Mat image(HEIGHT, WIDTH, CV_8UC3);
 static Ptr<FeatureDetector> detector;
 static std::vector<KeyPoint> keypoints;
 static KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
-static Mat_<double> measurement(3, 1); measurement.setTo(Scalar(0));
+static Mat_<float> measurement(3, 1); // measurement.setTo(Scalar(0));
 
 static MPU_6050 mpu6050;
 static AXDL345  axdl345;
@@ -65,11 +65,13 @@ void *thread_feature(void *arg)
 void *thread_sensor(void* arg)
 {
 	mpu6050.Init();
-	kalman.transitionMatrix = *(Mat_<double>(4, 4) << 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
-	kalman.statePre.at<double>(0) = mpu6050.AccelX();
-	kalman.statePre.at<double>(1) = mpu6050.AccelY();
-	kalman.statePre.at<double>(2) = mpu6050.AccelZ();
-	kalman.statePre.at<double>(3) = 0.0;
+
+	measurement.setTo(Scalar(0));
+	kalman.transitionMatrix = *(Mat_<float>(4, 4) << 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+	kalman.statePre.at<float>(0) = mpu6050.AccelX();
+	kalman.statePre.at<float>(1) = mpu6050.AccelY();
+	kalman.statePre.at<float>(2) = mpu6050.AccelZ();
+	kalman.statePre.at<float>(3) = 0.0;
 	setIdentity(kalman.measurementMatrix);
 	setIdentity(kalman.processNoiseCov, Scalar::all(1e-4));
 	setIdentity(kalman.measurementNoiseCov, Scalar::all(10));
@@ -92,12 +94,12 @@ void *thread_sensor(void* arg)
 		measurement(2) = z;
 		Mat estimated = kalman.correct(measurement);
 		
-		xSpeed += x * INTERVAL / 1000;
-		ySpeed += y * INTERVAL / 1000;
-		zSpeed += z * INTERVAL / 1000;
-		X += xSpeed * INTERVAL / 1000;
-		Y += ySpeed * INTERVAL / 1000;
-		Z += zSpeed * INTERVAL / 1000;
+		xSpeed += estimated.at<float>(0) * INTERVAL / 1000;
+		ySpeed += estimated.at<float>(1) * INTERVAL / 1000;
+		zSpeed += estimated.at<float>(2) * INTERVAL / 1000;
+		X += xSpeed * 1000;
+		Y += ySpeed * 1000;
+		Z += zSpeed * 1000;
 		Quaternion q(0.0, x, y, z);
 		VectorFloat vector[3];
 		GetGravity(vector, &q);
@@ -105,7 +107,7 @@ void *thread_sensor(void* arg)
 		GetYawPitchRoll(ypr, &q, vector);
 		//mpu6050.Next();
 		printf("%8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f\n", 
-			x, y, z, estimated.at<double>(0), estimated.at<double>(1), estimated.at<double>(2), X, Y, Z);
+			x, y, z, estimated.at<float>(0), estimated.at<float>(1), estimated.at<float>(2), X, Y, Z);
 		usleep(1000 * INTERVAL);
 	}
 	return NULL;
