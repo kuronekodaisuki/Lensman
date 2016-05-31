@@ -82,12 +82,12 @@ void *thread_sensor(void* arg)
 	setIdentity(kalman.measurementNoiseCov, Scalar::all(10));
 	setIdentity(kalman.errorCovPost, Scalar::all(.1));
 
+	double x, y, z;
+	double xSpeed = 0, ySpeed = 0, zSpeed = 0;
+	double X = 0, Y = 0, Z = 0;
+
 	while (1)
 	{
-		double x, y, z;
-		double xSpeed = 0, ySpeed = 0, zSpeed = 0;
-		double X = 0, Y = 0, Z = 0;
-
 		kalman.predict();
 
 		x = mpu6050.accelX();
@@ -111,8 +111,8 @@ void *thread_sensor(void* arg)
 		float ypr[3];
 		GetYawPitchRoll(ypr, &q, vector);
 		//mpu6050.Next();
-		printf("%8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f\n", 
-			x, y, z, estimated.at<float>(0), estimated.at<float>(1), estimated.at<float>(2), X, Y, Z);
+		printf("%8.5f, %8.5f, %8.5f, %8.5f, %8.5f, %8.5f\n", 
+			estimated.at<float>(0), estimated.at<float>(1), estimated.at<float>(2), X, Y, Z);
 		usleep(1000 * INTERVAL);
 	}
 	return NULL;
