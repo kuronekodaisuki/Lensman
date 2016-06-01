@@ -102,9 +102,9 @@ void *thread_sensor(void* arg)
 		xSpeed += estimated.at<float>(0) * INTERVAL / 1000; // speed m/s
 		ySpeed += estimated.at<float>(1) * INTERVAL / 1000;
 		zSpeed += estimated.at<float>(2) * INTERVAL / 1000;
-		X += xSpeed * INTERVAL; // speed * INTERVAL / 1000 * 1000 displacement in mm
-		Y += ySpeed * INTERVAL;
-		Z += zSpeed * INTERVAL;
+		X += xSpeed * INTERVAL / 1000; // speed * INTERVAL / 1000 * 1000 displacement in mm
+		Y += ySpeed * INTERVAL / 1000;
+		Z += zSpeed * INTERVAL / 1000;
 		Quaternion q(0.0, x, y, z);
 		VectorFloat vector[3];
 		GetGravity(vector, &q);
