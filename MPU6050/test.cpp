@@ -51,8 +51,7 @@ double scale, xoff, yoff;
 // This adds a cube of size (1,1,1) centered at (0,0,0), then it
 // scales it up by (s) and moves it (d).  (r) is its current rotation
 // around the axes, though it is ignored at present.
-static void
-add_cube(point_t s, point_t r, point_t d)
+static void add_cube(point_t s, point_t r, point_t d)
 {
 	int i;
 	object_t *o = (object_t *)malloc(sizeof(object_t));
@@ -80,16 +79,14 @@ add_cube(point_t s, point_t r, point_t d)
 	objects = o;
 }
 
-static void
-reset_scale(const Cairo::RefPtr<Cairo::Context>& cr)
+static void reset_scale(const Cairo::RefPtr<Cairo::Context>& cr)
 {
 	minx = miny = 1000000;
 	maxx = maxy = -1000000;
 	//g_print("reset now %f - %f, %f - %f\n", minx,maxx,miny,maxy);
 }
 
-static void
-accum_scale(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p, int n)
+static void accum_scale(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p, int n)
 {
 	double x, y;
 	double vpd = 1;
@@ -111,8 +108,7 @@ accum_scale(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p, int n)
 }
 
 
-static void
-cairo_move_to_scaled(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p)
+static void cairo_move_to_scaled(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p)
 {
 	double x, y;
 	double vpd = 1;
@@ -123,8 +119,7 @@ cairo_move_to_scaled(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p)
 	cr->move_to(x, y);
 }
 
-static void
-cairo_line_to_scaled(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p)
+static void cairo_line_to_scaled(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p)
 {
 	double x, y;
 	double vpd = 1;
@@ -136,8 +131,7 @@ cairo_line_to_scaled(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p)
 	cr->line_to(x, y);
 }
 
-static void
-draw_3d8(const Cairo::RefPtr<Cairo::Context>& cr, point_t *q)
+static void draw_3d8(const Cairo::RefPtr<Cairo::Context>& cr, point_t *q)
 {
 	int c;
 	static double col = 0.01;
@@ -160,8 +154,7 @@ draw_3d8(const Cairo::RefPtr<Cairo::Context>& cr, point_t *q)
 		step = -step;
 }
 
-static int
-get_quadrant(double *x, double *y)
+static int get_quadrant(double *x, double *y)
 {
 	if (*y >= 0)
 		return *x >= 0 ? 0 : 1;
@@ -169,8 +162,7 @@ get_quadrant(double *x, double *y)
 		return *x >= 0 ? 3 : 2;
 }
 
-static void
-set_quadrant(double *x, double *y, int quad)
+static void set_quadrant(double *x, double *y, int quad)
 {
 	if (quad >= 2) {
 		*y = -fabs(*y);
@@ -188,8 +180,7 @@ set_quadrant(double *x, double *y, int quad)
 	}
 }
 
-static void
-transform(double *x, double *y, double rot)
+static void transform(double *x, double *y, double rot)
 {
 	// Rotate round x axis, i.e. change y & z
 	int quad = get_quadrant(x, y);
@@ -212,8 +203,7 @@ transform(double *x, double *y, double rot)
 	//g_print("         : y %f, z %f, q %d\n",p->y,p->z,quad);
 }
 
-static void
-transform_x(point_t *p, int n, double rot)
+static void transform_x(point_t *p, int n, double rot)
 {
 	while (n--) {
 		transform(&p->y, &p->z, rot);
@@ -221,8 +211,7 @@ transform_x(point_t *p, int n, double rot)
 	}
 }
 
-static void
-transform_y(point_t *p, int n, double rot)
+static void transform_y(point_t *p, int n, double rot)
 {
 	while (n--) {
 		transform(&p->x, &p->z, rot);
@@ -230,8 +219,7 @@ transform_y(point_t *p, int n, double rot)
 	}
 }
 
-static void
-transform_z(point_t *p, int n, double rot)
+static void transform_z(point_t *p, int n, double rot)
 {
 	while (n--) {
 		transform(&p->y, &p->x, rot);
@@ -239,8 +227,7 @@ transform_z(point_t *p, int n, double rot)
 	}
 }
 
-static void
-transform_o(point_t *p, int n, double o)
+static void transform_o(point_t *p, int n, double o)
 {
 	while (n--) {
 		p->x += o;
@@ -293,6 +280,9 @@ void setup() {
 	add_cube((point_t){ 0.5, 0.5, 2 }, (point_t){ 0, 0, 0 }, (point_t){ 0, 0, 1.25 });
 }
 
+//////////////////////////////////////////////////////////
+// GTK derived class
+
 class Cube : public Gtk::DrawingArea
 {
 public:
@@ -330,25 +320,6 @@ Cube::~Cube()
 {
 }
 
-void
-Cube::calc_scale(const Cairo::RefPtr<Cairo::Context>& cr)
-{
-	Gtk::Allocation allocation = get_allocation();
-	const double w = allocation.get_width() - 8;
-	const double h = allocation.get_height() - 8;
-
-	if (fabs(maxx - minx) > fabs(maxy - miny)) {
-		scale = w / fabs(maxx - minx);
-		//g_print("scaling on x\n");
-	}
-	else {
-		scale = h / fabs(maxy - miny);
-		//g_print("scaling on y\n");
-	}
-	xoff = -minx;
-	yoff = -maxy;
-	//g_print("calc_scale %f - %f, %f - %f, %f, %f %f\n",minx,maxx,miny,maxy,scale,xoff,yoff);
-}
 
 bool Cube::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
@@ -435,8 +406,27 @@ bool Cube::on_timeout()
 	return true;
 }
 
+void Cube::calc_scale(const Cairo::RefPtr<Cairo::Context>& cr)
+{
+	Gtk::Allocation allocation = get_allocation();
+	const double w = allocation.get_width() - 8;
+	const double h = allocation.get_height() - 8;
 
+	if (fabs(maxx - minx) > fabs(maxy - miny)) {
+		scale = w / fabs(maxx - minx);
+		//g_print("scaling on x\n");
+	}
+	else {
+		scale = h / fabs(maxy - miny);
+		//g_print("scaling on y\n");
+	}
+	xoff = -minx;
+	yoff = -maxy;
+	//g_print("calc_scale %f - %f, %f - %f, %f, %f %f\n",minx,maxx,miny,maxy,scale,xoff,yoff);
+}
 
+//////////////////////////////////////////////////////////
+// Main function
 int main(int argc, char *argv[])
 {
 	Gtk::Main kit(argc, argv);
@@ -450,30 +440,5 @@ int main(int argc, char *argv[])
 
 	Gtk::Main::run(win);
 
-	/*
-	MPU6050 mpu;
-	mpu.initialize();
-	if (mpu.dmpInitialize() == 0)
-	{
-		mpu.setDMPEnable(true);
-		int status = mpu.getIntStatus();
-		int packetSize = mpu.dmpGetFIFOPacketSize();
-
-		int fifoCount = 0;
-		while (fifoCount < packetSize)
-			fifoCount = mpu.getFifoCount();
-
-		mpu.getFIFOBytes(fifoBuffer, packetSize);
-		fifoCount -= packetSize;
-
-		Quaternion quaternion;
-
-		mpu.dmpGetQuaternion(&quaternion, fifoBuffer);
-		mpu.dmpGetAccel(&aa, fifoBuffer);
-		mpu.dmpGetGravity(&gravity, &quaternion);
-		mpu.dmpGetLinearAccel(&real, &aa, &gravity);
-
-	}
-	*/
 	return 0;
 }
