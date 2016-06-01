@@ -13,7 +13,7 @@ CXXFLAGS = -DDMP_FIFO_RATE=9 -Wall -g -O2 `pkg-config gtkmm-3.0 --cflags --libs`
 
 $(CMN_OBJS) $(DMP_OBJS) $(RAW_OBJS) : $(HDRS)
 
-demo_3d: $(D3D_OBJS) $(CMN_OBJS)
+test: $(D3D_OBJS) $(CMN_OBJS)
 	$(CXX) -o $@ $^ -lm `pkg-config gtkmm-3.0 --cflags --libs`
 
 # 'make test_3d' will give you a test_3d that is controlled via the keyboard rather

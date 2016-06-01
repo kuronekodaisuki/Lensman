@@ -437,7 +437,7 @@ bool Cube::on_timeout()
 
 
 
-int main(int argc, char *argv)
+int main(int argc, char *argv[])
 {
 	Gtk::Main kit(argc, argv);
 
@@ -450,6 +450,7 @@ int main(int argc, char *argv)
 
 	Gtk::Main::run(win);
 
+	/*
 	MPU6050 mpu;
 	mpu.initialize();
 	if (mpu.dmpInitialize() == 0)
@@ -473,5 +474,6 @@ int main(int argc, char *argv)
 		mpu.dmpGetLinearAccel(&real, &aa, &gravity);
 
 	}
+	*/
 	return 0;
 }
