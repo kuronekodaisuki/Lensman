@@ -110,25 +110,6 @@ accum_scale(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p, int n)
 	}
 }
 
-void
-Cube::calc_scale(const Cairo::RefPtr<Cairo::Context>& cr)
-{
-	Gtk::Allocation allocation = get_allocation();
-	const double w = allocation.get_width() - 8;
-	const double h = allocation.get_height() - 8;
-
-	if (fabs(maxx - minx) > fabs(maxy - miny)) {
-		scale = w / fabs(maxx - minx);
-		//g_print("scaling on x\n");
-	}
-	else {
-		scale = h / fabs(maxy - miny);
-		//g_print("scaling on y\n");
-	}
-	xoff = -minx;
-	yoff = -maxy;
-	//g_print("calc_scale %f - %f, %f - %f, %f, %f %f\n",minx,maxx,miny,maxy,scale,xoff,yoff);
-}
 
 static void
 cairo_move_to_scaled(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p)
@@ -312,6 +293,26 @@ void setup() {
 	add_cube((point_t){ 0.5, 0.5, 2 }, (point_t){ 0, 0, 0 }, (point_t){ 0, 0, 1.25 });
 }
 
+class Cube : public Gtk::DrawingArea
+{
+public:
+	Cube();
+	virtual ~Cube();
+
+protected:
+	//Override default signal handler:
+	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
+
+	bool on_timeout();
+
+	double m_radius;
+	double m_line_width;
+
+private:
+	void calc_scale(const Cairo::RefPtr<Cairo::Context>& cr);
+};
+
+
 Cube::Cube()
 	: m_radius(0.42), m_line_width(0.05)
 {
@@ -327,6 +328,26 @@ Cube::Cube()
 
 Cube::~Cube()
 {
+}
+
+void
+Cube::calc_scale(const Cairo::RefPtr<Cairo::Context>& cr)
+{
+	Gtk::Allocation allocation = get_allocation();
+	const double w = allocation.get_width() - 8;
+	const double h = allocation.get_height() - 8;
+
+	if (fabs(maxx - minx) > fabs(maxy - miny)) {
+		scale = w / fabs(maxx - minx);
+		//g_print("scaling on x\n");
+	}
+	else {
+		scale = h / fabs(maxy - miny);
+		//g_print("scaling on y\n");
+	}
+	xoff = -minx;
+	yoff = -maxy;
+	//g_print("calc_scale %f - %f, %f - %f, %f, %f %f\n",minx,maxx,miny,maxy,scale,xoff,yoff);
 }
 
 bool Cube::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
@@ -413,25 +434,6 @@ bool Cube::on_timeout()
 	}
 	return true;
 }
-
-class Cube : public Gtk::DrawingArea
-{
-public:
-	Cube();
-	virtual ~Cube();
-
-protected:
-	//Override default signal handler:
-	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
-
-	bool on_timeout();
-
-	double m_radius;
-	double m_line_width;
-
-private:
-	void calc_scale(const Cairo::RefPtr<Cairo::Context>& cr);
-};
 
 
 
