@@ -11,7 +11,7 @@
 // for a GtkGL one (see this posting) but that method didn't work for me; the above, 
 // programmatically creating it, always did.
 
-You need gtkglext / gtkglextmm for the GL Drawingarea widget.
+//You need gtkglext / gtkglextmm for the GL Drawingarea widget.
 
 #include <gtkmm.h>
 #include <gtkglmm.h>
