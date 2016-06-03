@@ -25,7 +25,8 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 
 // orientation/motion vars
 Quaternion q;           // [w, x, y, z]         quaternion container
-VectorInt16 aa;         // [x, y, z]            accel sensor measurements
+VectorInt16 accel;      // [x, y, z]            accel sensor measurements
+VectorInt16 gyro;
 VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
 VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector
@@ -390,13 +391,12 @@ bool Cube::on_timeout()
 
 	// Calcurate Gravity and Yaw, Pitch, Roll
 	mpu.dmpGetQuaternion(&q, fifoBuffer);
-
-	printf("%f, %f, %f, %f\n", q.w, q.x, q.y, q.z);
-
 	mpu.dmpGetGravity(&gravity, &q);
 	mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
-	//printf("%f, %f, %f\n", ypr[0], ypr[1], ypr[2]);
+	mpu.dmpGetAccel(&accel, fifoBuffer);
+	mpu.dmpGetGyro(&gyro, fifoBuffer);
+	printf("%f, %f, %f, %f, %f, %f\n", accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z);
 
 	// Make Object
 	for (o = objects; o; o = o->next) {
