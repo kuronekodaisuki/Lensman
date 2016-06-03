@@ -388,12 +388,15 @@ bool Cube::on_timeout()
 	if (pkts > 5)
 		printf("Found %d packets, running slowly\n", pkts);
 
-	// Calcurate Dravity and Yaw, Pitch, Roll
+	// Calcurate Gravity and Yaw, Pitch, Roll
 	mpu.dmpGetQuaternion(&q, fifoBuffer);
+
+	printf("%f, %f, %f, %f\n", q.w, q.x, q.y, q.z);
+
 	mpu.dmpGetGravity(&gravity, &q);
 	mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
-	printf("%f, %f, %f\n", ypr[0], ypr[1], ypr[2]);
+	//printf("%f, %f, %f\n", ypr[0], ypr[1], ypr[2]);
 
 	// Make Object
 	for (o = objects; o; o = o->next) {
