@@ -372,7 +372,8 @@ bool Cube::on_timeout()
 	object_t *o;
 
 	int pkts = 0;
-
+	
+	// Get data from FIFO
 	fifoCount = mpu.getFIFOCount();
 	if (fifoCount > 900) {
 		// Full is 1024, so 900 probably means things have gone bad
@@ -386,10 +387,15 @@ bool Cube::on_timeout()
 	}
 	if (pkts > 5)
 		printf("Found %d packets, running slowly\n", pkts);
+
+	// Calcurate Dravity and Yaw, Pitch, Roll
 	mpu.dmpGetQuaternion(&q, fifoBuffer);
 	mpu.dmpGetGravity(&gravity, &q);
 	mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
+	printf("%f, %f, %f\n", ypr[0], ypr[1], ypr[2]);
+
+	// Make Object
 	for (o = objects; o; o = o->next) {
 		memcpy(o->q, o->p, sizeof(point_t) * o->n);
 		transform_x(o->q, 8, ypr[2]);
