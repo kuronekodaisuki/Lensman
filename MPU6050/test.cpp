@@ -13,6 +13,9 @@
 
 #include "MPU6050_6Axis_MotionApps20.h"
 
+#define INTERVAL	10 // msec
+
+
 MPU6050 mpu;
 
 // MPU control/status vars
@@ -27,6 +30,13 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 Quaternion q;           // [w, x, y, z]         quaternion container
 int16_t accel[3];      // [x, y, z]            accel sensor measurements
 int16_t gyro[3];
+int32_t adjAccel[3] = { 0, 0, 0 };
+int32_t adjGyro[3] = { 0, 0, 0 };
+const double GRAVITATIONAL_ACCELERATION = 9.80665;
+
+float speed[3] = { 0.0, 0.0, 0.0 };
+float disp[3] = { 0.0, 0.0, 0.0 };
+
 VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
 VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector
@@ -107,7 +117,6 @@ static void accum_scale(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p, int
 		p++;
 	}
 }
-
 
 static void cairo_move_to_scaled(const Cairo::RefPtr<Cairo::Context>& cr, point_t *p)
 {
@@ -236,7 +245,28 @@ static void transform_o(point_t *p, int n, double o)
 	}
 }
 
-void setup() {
+// Read fifo 
+static void readFIFO()
+{
+	int pkts = 0;
+
+	// Get data from FIFO
+	fifoCount = mpu.getFIFOCount();
+	if (fifoCount > 900) {
+		// Full is 1024, so 900 probably means things have gone bad
+		printf("Oops, DMP FIFO has %d bytes, aborting\n", fifoCount);
+		exit(1);
+	}
+	while ((fifoCount = mpu.getFIFOCount()) >= 42) {
+		// read a packet from FIFO
+		mpu.getFIFOBytes(fifoBuffer, packetSize);
+		pkts++;
+	}
+	if (pkts > 5)
+		printf("Found %d packets, running slowly\n", pkts);
+}
+
+static void setup() {
 	// initialize device
 	printf("Initializing I2C devices...\n");
 	mpu.initialize();
@@ -279,6 +309,27 @@ void setup() {
 	//pinMode(LED_PIN, OUTPUT);
 	add_cube((point_t){ 2, 2, 0.5 }, (point_t){ 0, 0, 0 }, (point_t){ 0, 0, 0 });
 	add_cube((point_t){ 0.5, 0.5, 2 }, (point_t){ 0, 0, 0 }, (point_t){ 0, 0, 1.25 });
+
+	adjAccel[0] = adjAccel[1] = adjAccel[2] = 0;
+	adjGyro[0] = adjGyro[1] = adjGyro[2] = 0;
+	for (int i = 0; i < 20; i++)
+	{
+		readFIFO();
+		mpu.dmpGetAccel(accel, fifoBuffer);
+		mpu.dmpGetGyro(gyro, fifoBuffer);
+		adjAccel[0] += accel[0];
+		adjAccel[1] += accel[1];
+		adjAccel[2] += accel[2];
+		adjGyro[0] += gyro[0];
+		adjGyro[1] += gyro[1];
+		adjGyro[2] += gyro[2];
+	}
+	adjAccel[0] /= 20;
+	adjAccel[1] /= 20;
+	adjAccel[2] /= 20;
+	adjGyro[0] /= 20;
+	adjGyro[1] /= 20;
+	adjGyro[2] /= 20;
 }
 
 //////////////////////////////////////////////////////////
@@ -303,11 +354,10 @@ private:
 	void calc_scale(const Cairo::RefPtr<Cairo::Context>& cr);
 };
 
-
 Cube::Cube()
 	: m_radius(0.42), m_line_width(0.05)
 {
-	Glib::signal_timeout().connect(sigc::mem_fun(*this, &Cube::on_timeout), 10);
+	Glib::signal_timeout().connect(sigc::mem_fun(*this, &Cube::on_timeout), INTERVAL);
 
 #ifndef GLIBMM_DEFAULT_SIGNAL_HANDLERS_ENABLED
 	//Connect the signal handler if it isn't already a virtual method override:
@@ -320,7 +370,6 @@ Cube::Cube()
 Cube::~Cube()
 {
 }
-
 
 bool Cube::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
@@ -365,7 +414,6 @@ bool Cube::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 	return true;
 }
 
-
 bool Cube::on_timeout()
 {
 	// force our program to redraw the entire window.
@@ -395,9 +443,21 @@ bool Cube::on_timeout()
 	mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
 	mpu.dmpGetAccel(accel, fifoBuffer);
-	mpu.dmpGetGyro(gyro, fifoBuffer);
-	printf("%d, %d, %d, %d, %d, %d\n", 
-		accel[0], accel[1], accel[2], gyro[0], gyro[1], gyro[2]);
+	//mpu.dmpGetGyro(gyro, fifoBuffer);
+	float x = (float)(accel[0] - adjAccel[0]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	float y = (float)(accel[1] - adjAccel[1]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	float z = (float)(accel[2] - adjAccel[2]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	speed[0] += x * INTERVAL / 1000;
+	speed[1] += y * INTERVAL / 1000;
+	speed[2] += z * INTERVAL / 1000;
+	disp[0] += speed[0] * INTERVAL / 1000;
+	disp[1] += speed[1] * INTERVAL / 1000;
+	disp[2] += speed[2] * INTERVAL / 1000;
+
+	printf("%f, %f, %f, %f, %f, %f, %f, %f, %f\n", 
+		x, y, z, 
+		speed[0], speed[1], speed[2],
+		disp[0], disp[1], disp[2]);
 
 	// Make Object
 	for (o = objects; o; o = o->next) {
