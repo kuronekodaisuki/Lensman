@@ -330,7 +330,7 @@ static void setup() {
 	adjGyro[0] /= 20;
 	adjGyro[1] /= 20;
 	adjGyro[2] /= 20;
-	printf("ADJUST: %d, %d, %d\n", adjAccel[0], adjAccel[1], adjAccel[2])
+	printf("ADJUST: %d, %d, %d\n", adjAccel[0], adjAccel[1], adjAccel[2]);
 }
 
 //////////////////////////////////////////////////////////
