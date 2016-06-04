@@ -130,6 +130,7 @@ void show()
 		Point2f pt = keypoints[i].pt;
 		circle(surface, Point(pt.x, pt.y), 3, Scalar(0, 0, 255));
 	}
+	circle(surface, Point(WIDTH / 2, HEIGHT / 2), 5, Scalar(0, 0, 255));
 	//printf("%d ", keypoints.size());
 
 	SDL_BlitSurface(frame, &srcRect, screen, &dstRect);
