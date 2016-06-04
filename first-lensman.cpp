@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>	// Kalman filter defined here
 #include <SDL/SDL.h>
 #include <pthread.h>
@@ -30,6 +31,7 @@ static std::vector<KeyPoint> keypoints;
 static KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
 static Mat_<float> measurement(3, 1); // measurement.setTo(Scalar(0));
 static Mat estimated;
+static double x, y, z;
 
 static MPU_6050 mpu6050;
 static AXDL345  axdl345;
@@ -83,7 +85,7 @@ void *thread_sensor(void* arg)
 	setIdentity(kalman.measurementNoiseCov, Scalar::all(10));
 	setIdentity(kalman.errorCovPost, Scalar::all(.1));
 
-	double x, y, z;
+	//double x, y, z;
 	double xSpeed = 0, ySpeed = 0, zSpeed = 0;
 	double X = 0, Y = 0, Z = 0;
 
@@ -127,7 +129,8 @@ void show()
 	SDL_Rect dstRect = {0, 0};
  
 	Point center(WIDTH / 2, HEIGHT / 2);
-	Point vector(center.x + (int)(estimated.at<float>(0) * 100), center.y + (int)(estimated.at<float>(1) * 100));
+	//Point vector(center.x + (int)(estimated.at<float>(0) * 100), center.y + (int)(estimated.at<float>(1) * 100));
+	Point vector(center.x + (int)(x * 100), center.y + (int)(y * 100));
 
 	Mat surface(HEIGHT, WIDTH, CV_8UC3, frame->pixels);
 	for (size_t i = 0; i < keypoints.size(); i++)
@@ -136,8 +139,8 @@ void show()
 		circle(surface, Point(pt.x, pt.y), 3, Scalar(0, 0, 255));
 	}
 	// Center
-	circle(surface, , 3, Scalar(255, 255, 255));
-	arrowedLine(surface, center, vector, Scalar(255, 255, 255));
+	circle(surface, center, 3, Scalar(255, 255, 255));
+	line(surface, center, vector, Scalar(255, 255, 255));
 
 	//printf("%d ", keypoints.size());
 
@@ -185,13 +188,13 @@ int main (int argc, char *argv[])
 	//image.create(WIDTH, HEIGHT, CV_8UC3);
 	detector = FeatureDetector::create("STAR");
 
-	//Start the image streaming
-	omxcam_video_start(&settings, 1000 * 1); //OMXCAM_CAPTURE_FOREVER);
-
 	pthread_mutex_init(&mutex, NULL);
 
 	pthread_t thread;
 	pthread_create(&thread, NULL, thread_sensor, NULL);
+
+        //Start the image streaming
+        omxcam_video_start(&settings, 1000 * 10); //OMXCAM_CAPTURE_FOREVER);
 
 	//int quit = 0;
 	while (!quit)
