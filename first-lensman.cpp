@@ -29,6 +29,7 @@ static Ptr<FeatureDetector> detector;
 static std::vector<KeyPoint> keypoints;
 static KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
 static Mat_<float> measurement(3, 1); // measurement.setTo(Scalar(0));
+static Mat estimated;
 
 static MPU_6050 mpu6050;
 static AXDL345  axdl345;
@@ -97,7 +98,8 @@ void *thread_sensor(void* arg)
 		measurement(0) = x;
 		measurement(1) = y;
 		measurement(2) = z;
-		Mat estimated = kalman.correct(measurement);
+		
+		estimated = kalman.correct(measurement);
 		
 		xSpeed += estimated.at<float>(0) * INTERVAL / 1000; // speed m/s
 		ySpeed += estimated.at<float>(1) * INTERVAL / 1000;
@@ -124,13 +126,19 @@ void show()
 	SDL_Rect srcRect = {0, 0, WIDTH, HEIGHT};
 	SDL_Rect dstRect = {0, 0};
  
+	Point center(WIDTH / 2, HEIGHT / 2);
+	Point vector(center.x + (int)(estimated.at<float>(0) * 100), center.y + (int)(estimated.at<float>(1) * 100));
+
 	Mat surface(HEIGHT, WIDTH, CV_8UC3, frame->pixels);
 	for (size_t i = 0; i < keypoints.size(); i++)
 	{
 		Point2f pt = keypoints[i].pt;
 		circle(surface, Point(pt.x, pt.y), 3, Scalar(0, 0, 255));
 	}
-	circle(surface, Point(WIDTH / 2, HEIGHT / 2), 5, Scalar(0, 0, 255));
+	// Center
+	circle(surface, , 3, Scalar(255, 255, 255));
+	arrowedLine(surface, center, vector, Scalar(255, 255, 255));
+
 	//printf("%d ", keypoints.size());
 
 	SDL_BlitSurface(frame, &srcRect, screen, &dstRect);
