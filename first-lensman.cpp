@@ -2,13 +2,12 @@
 
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+//#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>	// Kalman filter defined here
 #include <SDL/SDL.h>
 #include <pthread.h>
 #include "omxcam.h"
 #include "I2C.h"
-//#include "KalmanFilter/Kalman.h"
 #include "Quaternion.h"
 
 using namespace cv;
@@ -129,8 +128,8 @@ void show()
 	SDL_Rect dstRect = {0, 0};
  
 	Point center(WIDTH / 2, HEIGHT / 2);
-	//Point vector(center.x + (int)(estimated.at<float>(0) * 100), center.y + (int)(estimated.at<float>(1) * 100));
-	Point vector(center.x + (int)(x * 100), center.y + (int)(y * 100));
+	Point vector(center.x + (int)(estimated.at<float>(0) * 100), center.y + (int)(estimated.at<float>(1) * 100));
+	//Point vector(center.x + (int)(x * 100), center.y + (int)(y * 100));
 
 	Mat surface(HEIGHT, WIDTH, CV_8UC3, frame->pixels);
 	for (size_t i = 0; i < keypoints.size(); i++)
@@ -141,6 +140,8 @@ void show()
 	// Center
 	circle(surface, center, 3, Scalar(255, 255, 255));
 	line(surface, center, vector, Scalar(255, 255, 255));
+	vector = Point(center.x + (int)(x * 100), center.y + (int)(y * 100));
+	line(surface, center, vector, Scalar(255, 0, 0));
 
 	//printf("%d ", keypoints.size());
 
@@ -194,7 +195,7 @@ int main (int argc, char *argv[])
 	pthread_create(&thread, NULL, thread_sensor, NULL);
 
         //Start the image streaming
-        omxcam_video_start(&settings, 1000 * 10); //OMXCAM_CAPTURE_FOREVER);
+        omxcam_video_start(&settings, 1000 * 30); //OMXCAM_CAPTURE_FOREVER);
 
 	//int quit = 0;
 	while (!quit)
