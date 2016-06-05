@@ -37,8 +37,9 @@ const double GRAVITATIONAL_ACCELERATION = 9.80665;
 float speed[3] = { 0.0, 0.0, 0.0 };
 float disp[3] = { 0.0, 0.0, 0.0 };
 
-VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
-VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
+VectorInt16 accelRaw;		// [x, y, z]			raw accel sensor measurements
+VectorInt16 accelReal;     // [x, y, z]            gravity-free accel sensor measurements
+VectorInt16 accelWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
@@ -443,7 +444,10 @@ bool Cube::on_timeout()
 	mpu.dmpGetGravity(&gravity, &q);
 	mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
-	mpu.dmpGetAccel(accel, fifoBuffer);
+	mpu.dmpGetAccel(&accelRaw, fifoBuffer);
+	mpu.dmpGetLinearAccel(&accelReal, &accelRaw, &gravity);
+	mpu.dmpGetLinearAccelInWorld(&accelWorld, &accelReal, &q);
+
 	//mpu.dmpGetGyro(gyro, fifoBuffer);
 	float x = (float)(accel[0] - adjAccel[0]) / 16384 * GRAVITATIONAL_ACCELERATION;
 	float y = (float)(accel[1] - adjAccel[1]) / 16384 * GRAVITATIONAL_ACCELERATION;
@@ -455,10 +459,11 @@ bool Cube::on_timeout()
 	disp[1] += speed[1] * INTERVAL / 1000;
 	disp[2] += speed[2] * INTERVAL / 1000;
 
-	printf("%f, %f, %f, %f, %f, %f, %f, %f, %f\n", 
-		x, y, z, 
-		speed[0], speed[1], speed[2],
-		disp[0], disp[1], disp[2]);
+	printf("%f, %f, %f\n",
+		accelWorld.x, accelWorld.y, accelWorld.z);
+		//x, y, z, 
+		//speed[0], speed[1], speed[2],
+		//disp[0], disp[1], disp[2]);
 
 	// Make Object
 	for (o = objects; o; o = o->next) {
