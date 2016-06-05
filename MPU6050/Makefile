@@ -11,11 +11,12 @@ D3D_OBJS = test.o
 
 CXXFLAGS = -DDMP_FIFO_RATE=9 -Wall -g -O2 `pkg-config gtkmm-3.0 --cflags --libs`
 GTKFLAGS = `pkg-config gtkglextmm-1.2 --cflags --libs`
+OPENCVFLAGS = `pkg-config opencv --cflags --libs`
 
 $(CMN_OBJS) $(DMP_OBJS) $(RAW_OBJS) : $(HDRS)
 
 test: $(D3D_OBJS) $(CMN_OBJS)
-	$(CXX) -o $@ $^ -lm `pkg-config gtkmm-3.0 --cflags --libs`
+	$(CXX) -o $@ $^ -lm `pkg-config gtkmm-3.0 --cflags --libs` -lopencv_core  -lopencv_video
 
 gtk: GTK_sample.cpp
 	$(CXX) $(CXXFLAGS) $(GTKFLAGS) -DOFFLINE_TEST -o test_3d GTK_sample.cpp

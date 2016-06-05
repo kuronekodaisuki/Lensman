@@ -14,6 +14,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/video/tracking.hpp>	// Kalman filter defined here
 
+
 #include "MPU6050_6Axis_MotionApps20.h"
 
 #define INTERVAL	20 // msec
@@ -46,9 +47,9 @@ VectorInt16 accelWorld;    // [x, y, z]            world-frame accel sensor meas
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
-Mat_<float> measurement(3, 1); // measurement.setTo(Scalar(0));
-Mat estimated;
+cv::KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
+cv::Mat_<float> measurement(3, 1); // measurement.setTo(Scalar(0));
+cv::Mat estimated;
 
 typedef struct _point {
 	double x, y, z;
@@ -339,21 +340,23 @@ static void setup() {
 	adjGyro[2] /= 20;
 	printf("ADJUST: %d, %d, %d\n", adjAccel[0], adjAccel[1], adjAccel[2]);
 
-	measurement.setTo(Scalar(0));
+	measurement.setTo(cv::Scalar(0));
 	kalman.transitionMatrix =
-		*(Mat_<float>(4, 4) <<
+		*(cv::Mat_<float>(4, 4) <<
 		1, 0, 1, 0,
 		0, 1, 0, 1,
 		0, 0, 1, 0,
 		0, 0, 0, 1);
-	kalman.statePre.at<float>(0) = mpu6050.accelX();
-	kalman.statePre.at<float>(1) = mpu6050.accelY();
-	kalman.statePre.at<float>(2) = mpu6050.accelZ();
+	readFIFO();
+	mpu.dmpGetAccel(accel, fifoBuffer);
+	kalman.statePre.at<float>(0) = accel[0];
+	kalman.statePre.at<float>(1) = accel[1];
+	kalman.statePre.at<float>(2) = accel[2];
 	kalman.statePre.at<float>(3) = 0.0;
 	setIdentity(kalman.measurementMatrix);
-	setIdentity(kalman.processNoiseCov, Scalar::all(1e-4));
-	setIdentity(kalman.measurementNoiseCov, Scalar::all(10));
-	setIdentity(kalman.errorCovPost, Scalar::all(.1));
+	setIdentity(kalman.processNoiseCov, cv::Scalar::all(1e-4));
+	setIdentity(kalman.measurementNoiseCov, cv::Scalar::all(10));
+	setIdentity(kalman.errorCovPost, cv::Scalar::all(.1));
 }
 
 //////////////////////////////////////////////////////////
