@@ -13,7 +13,7 @@
 
 #include "MPU6050_6Axis_MotionApps20.h"
 
-#define INTERVAL	50 // msec
+#define INTERVAL	20 // msec
 
 
 MPU6050 mpu;
@@ -448,7 +448,7 @@ bool Cube::on_timeout()
 	mpu.dmpGetLinearAccel(&accelReal, &accelRaw, &gravity);
 	mpu.dmpGetLinearAccelInWorld(&accelWorld, &accelReal, &q);
 
-	//mpu.dmpGetGyro(gyro, fifoBuffer);
+	mpu.dmpGetAccel(accel, fifoBuffer);
 	double x = (double)(accel[0] - adjAccel[0]) / 16384 * GRAVITATIONAL_ACCELERATION;
 	double y = (double)(accel[1] - adjAccel[1]) / 16384 * GRAVITATIONAL_ACCELERATION;
 	double z = (double)(accel[2] - adjAccel[2]) / 16384 * GRAVITATIONAL_ACCELERATION;
@@ -464,8 +464,6 @@ bool Cube::on_timeout()
 		(double)accelWorld.y / 16384 * GRAVITATIONAL_ACCELERATION, 
 		(double)accelWorld.z / 16384 * GRAVITATIONAL_ACCELERATION,
 		x, y, z);
-		//speed[0], speed[1], speed[2],
-		//disp[0], disp[1], disp[2]);
 
 	// Make Object
 	for (o = objects; o; o = o->next) {
