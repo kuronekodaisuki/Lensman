@@ -13,7 +13,7 @@
 
 #include "MPU6050_6Axis_MotionApps20.h"
 
-#define INTERVAL	10 // msec
+#define INTERVAL	50 // msec
 
 
 MPU6050 mpu;
@@ -449,9 +449,9 @@ bool Cube::on_timeout()
 	mpu.dmpGetLinearAccelInWorld(&accelWorld, &accelReal, &q);
 
 	//mpu.dmpGetGyro(gyro, fifoBuffer);
-	float x = (float)(accel[0] - adjAccel[0]) / 16384 * GRAVITATIONAL_ACCELERATION;
-	float y = (float)(accel[1] - adjAccel[1]) / 16384 * GRAVITATIONAL_ACCELERATION;
-	float z = (float)(accel[2] - adjAccel[2]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	double x = (double)(accel[0] - adjAccel[0]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	double y = (double)(accel[1] - adjAccel[1]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	double z = (double)(accel[2] - adjAccel[2]) / 16384 * GRAVITATIONAL_ACCELERATION;
 	speed[0] += x * INTERVAL / 1000;
 	speed[1] += y * INTERVAL / 1000;
 	speed[2] += z * INTERVAL / 1000;
@@ -459,11 +459,11 @@ bool Cube::on_timeout()
 	disp[1] += speed[1] * INTERVAL / 1000;
 	disp[2] += speed[2] * INTERVAL / 1000;
 
-	printf("%f, %f, %f\n",
+	printf("%f, %f, %f, %f, %f, %f\n",
 		(double)accelWorld.x / 16384 * GRAVITATIONAL_ACCELERATION, 
 		(double)accelWorld.y / 16384 * GRAVITATIONAL_ACCELERATION, 
-		(double)accelWorld.z / 16384 * GRAVITATIONAL_ACCELERATION);
-		//x, y, z, 
+		(double)accelWorld.z / 16384 * GRAVITATIONAL_ACCELERATION,
+		x, y, z);
 		//speed[0], speed[1], speed[2],
 		//disp[0], disp[1], disp[2]);
 
