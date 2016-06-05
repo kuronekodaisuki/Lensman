@@ -11,6 +11,9 @@
 #include <gtkmm/window.h>
 #include <gtkmm/drawingarea.h>
 
+#include <opencv2/opencv.hpp>
+#include <opencv2/video/tracking.hpp>	// Kalman filter defined here
+
 #include "MPU6050_6Axis_MotionApps20.h"
 
 #define INTERVAL	20 // msec
@@ -43,6 +46,9 @@ VectorInt16 accelWorld;    // [x, y, z]            world-frame accel sensor meas
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
+Mat_<float> measurement(3, 1); // measurement.setTo(Scalar(0));
+Mat estimated;
 
 typedef struct _point {
 	double x, y, z;
@@ -332,6 +338,22 @@ static void setup() {
 	adjGyro[1] /= 20;
 	adjGyro[2] /= 20;
 	printf("ADJUST: %d, %d, %d\n", adjAccel[0], adjAccel[1], adjAccel[2]);
+
+	measurement.setTo(Scalar(0));
+	kalman.transitionMatrix =
+		*(Mat_<float>(4, 4) <<
+		1, 0, 1, 0,
+		0, 1, 0, 1,
+		0, 0, 1, 0,
+		0, 0, 0, 1);
+	kalman.statePre.at<float>(0) = mpu6050.accelX();
+	kalman.statePre.at<float>(1) = mpu6050.accelY();
+	kalman.statePre.at<float>(2) = mpu6050.accelZ();
+	kalman.statePre.at<float>(3) = 0.0;
+	setIdentity(kalman.measurementMatrix);
+	setIdentity(kalman.processNoiseCov, Scalar::all(1e-4));
+	setIdentity(kalman.measurementNoiseCov, Scalar::all(10));
+	setIdentity(kalman.errorCovPost, Scalar::all(.1));
 }
 
 //////////////////////////////////////////////////////////
@@ -371,6 +393,63 @@ Cube::Cube()
 
 Cube::~Cube()
 {
+}
+
+bool Cube::on_timeout()
+{
+	// force our program to redraw the entire window.
+	Glib::RefPtr<Gdk::Window> win = get_window();
+	object_t *o;
+
+	kalman.predict();
+
+	readFIFO();
+
+	// Calcurate Gravity and Yaw, Pitch, Roll
+	mpu.dmpGetQuaternion(&q, fifoBuffer);
+	mpu.dmpGetGravity(&gravity, &q);
+	mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+
+	mpu.dmpGetAccel(&accelRaw, fifoBuffer);
+	mpu.dmpGetLinearAccel(&accelReal, &accelRaw, &gravity);
+	mpu.dmpGetLinearAccelInWorld(&accelWorld, &accelReal, &q);
+
+	mpu.dmpGetAccel(accel, fifoBuffer);
+	float x = (float)(accel[0] - adjAccel[0]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	float y = (float)(accel[1] - adjAccel[1]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	float z = (float)(accel[2] - adjAccel[2]) / 16384 * GRAVITATIONAL_ACCELERATION;
+	speed[0] += x * INTERVAL / 1000;
+	speed[1] += y * INTERVAL / 1000;
+	speed[2] += z * INTERVAL / 1000;
+	disp[0] += speed[0] * INTERVAL / 1000;
+	disp[1] += speed[1] * INTERVAL / 1000;
+	disp[2] += speed[2] * INTERVAL / 1000;
+
+	measurement(0) = accelWorld.x;
+	measurement(1) = accelWorld.y;
+	measurement(2) = accelWorld.z;
+	estimated = kalman.correct(measurement);
+
+	printf("%f, %f, %f, %f, %f, %f\n",
+		(float)accelWorld.x, (float)accelWorld.y, (float)accelWorld.z,
+		estimated.at<float>(0), estimated.at<float>(1), estimated.at<float>(2)
+		);
+
+	// Make Object
+	for (o = objects; o; o = o->next) {
+		memcpy(o->q, o->p, sizeof(point_t) * o->n);
+		transform_x(o->q, 8, ypr[2]);
+		transform_y(o->q, 8, ypr[1]);
+		transform_z(o->q, 8, ypr[0]);
+		transform_o(o->q, 8, 6);
+	}
+	if (win)
+	{
+		Gdk::Rectangle r(0, 0, get_allocation().get_width(),
+			get_allocation().get_height());
+		win->invalidate_rect(r, false);
+	}
+	return true;
 }
 
 bool Cube::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
@@ -413,74 +492,6 @@ bool Cube::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 	}
 	cr->restore();
 
-	return true;
-}
-
-bool Cube::on_timeout()
-{
-	// force our program to redraw the entire window.
-	Glib::RefPtr<Gdk::Window> win = get_window();
-	object_t *o;
-
-	/*
-	int pkts = 0;
-	
-	// Get data from FIFO
-	fifoCount = mpu.getFIFOCount();
-	if (fifoCount > 900) {
-		// Full is 1024, so 900 probably means things have gone bad
-		printf("Oops, DMP FIFO has %d bytes, aborting\n", fifoCount);
-		exit(1);
-	}
-	while ((fifoCount = mpu.getFIFOCount()) >= 42) {
-		// read a packet from FIFO
-		mpu.getFIFOBytes(fifoBuffer, packetSize);
-		pkts++;
-	}
-	if (pkts > 5)
-		printf("Found %d packets, running slowly\n", pkts);
-	*/
-	readFIFO();
-
-	// Calcurate Gravity and Yaw, Pitch, Roll
-	mpu.dmpGetQuaternion(&q, fifoBuffer);
-	mpu.dmpGetGravity(&gravity, &q);
-	mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-
-	mpu.dmpGetAccel(&accelRaw, fifoBuffer);
-	mpu.dmpGetLinearAccel(&accelReal, &accelRaw, &gravity);
-	mpu.dmpGetLinearAccelInWorld(&accelWorld, &accelReal, &q);
-
-	mpu.dmpGetAccel(accel, fifoBuffer);
-	double x = (double)(accel[0] - adjAccel[0]) / 16384 * GRAVITATIONAL_ACCELERATION;
-	double y = (double)(accel[1] - adjAccel[1]) / 16384 * GRAVITATIONAL_ACCELERATION;
-	double z = (double)(accel[2] - adjAccel[2]) / 16384 * GRAVITATIONAL_ACCELERATION;
-	speed[0] += x * INTERVAL / 1000;
-	speed[1] += y * INTERVAL / 1000;
-	speed[2] += z * INTERVAL / 1000;
-	disp[0] += speed[0] * INTERVAL / 1000;
-	disp[1] += speed[1] * INTERVAL / 1000;
-	disp[2] += speed[2] * INTERVAL / 1000;
-
-	printf("%f, %f, %f, %f, %f, %f\n",
-		(double)accelWorld.x, (double)accelWorld.y, (double)accelWorld.z,
-		(double)accelReal.x, (double)accelReal.y, (double)accelReal.z);
-		//x, y, z);
-
-	// Make Object
-	for (o = objects; o; o = o->next) {
-		memcpy(o->q, o->p, sizeof(point_t) * o->n);
-		transform_x(o->q, 8, ypr[2]);
-		transform_y(o->q, 8, ypr[1]);
-		transform_z(o->q, 8, ypr[0]);
-		transform_o(o->q, 8, 6);
-	}
-	if (win)
-	{
-		Gdk::Rectangle r(0, 0, get_allocation().get_width(),
-			get_allocation().get_height());
-		win->invalidate_rect(r, false);
-	}
 	return true;
 }
 

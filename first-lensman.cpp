@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
-//#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>	// Kalman filter defined here
 #include <SDL/SDL.h>
 #include <pthread.h>
