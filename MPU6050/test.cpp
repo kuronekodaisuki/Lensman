@@ -460,7 +460,9 @@ bool Cube::on_timeout()
 	disp[2] += speed[2] * INTERVAL / 1000;
 
 	printf("%f, %f, %f\n",
-		accelWorld.x, accelWorld.y, accelWorld.z);
+		(double)accelWorld.x / 16384 * GRAVITATIONAL_ACCELERATION, 
+		(double)accelWorld.y / 16384 * GRAVITATIONAL_ACCELERATION, 
+		(double)accelWorld.z / 16384 * GRAVITATIONAL_ACCELERATION);
 		//x, y, z, 
 		//speed[0], speed[1], speed[2],
 		//disp[0], disp[1], disp[2]);
