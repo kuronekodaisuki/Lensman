@@ -422,6 +422,7 @@ bool Cube::on_timeout()
 	Glib::RefPtr<Gdk::Window> win = get_window();
 	object_t *o;
 
+	/*
 	int pkts = 0;
 	
 	// Get data from FIFO
@@ -438,6 +439,8 @@ bool Cube::on_timeout()
 	}
 	if (pkts > 5)
 		printf("Found %d packets, running slowly\n", pkts);
+	*/
+	readFIFO();
 
 	// Calcurate Gravity and Yaw, Pitch, Roll
 	mpu.dmpGetQuaternion(&q, fifoBuffer);
@@ -460,10 +463,9 @@ bool Cube::on_timeout()
 	disp[2] += speed[2] * INTERVAL / 1000;
 
 	printf("%f, %f, %f, %f, %f, %f\n",
-		(double)accelWorld.x / 16384 * GRAVITATIONAL_ACCELERATION, 
-		(double)accelWorld.y / 16384 * GRAVITATIONAL_ACCELERATION, 
-		(double)accelWorld.z / 16384 * GRAVITATIONAL_ACCELERATION,
-		x, y, z);
+		(double)accelWorld.x, (double)accelWorld.y, (double)accelWorld.z,
+		(double)accelReal.x, (double)accelReal.y, (double)accelReal.z);
+		//x, y, z);
 
 	// Make Object
 	for (o = objects; o; o = o->next) {
