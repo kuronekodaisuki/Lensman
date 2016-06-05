@@ -30,11 +30,11 @@ static std::vector<KeyPoint> keypoints;
 static KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
 static Mat_<float> measurement(3, 1); // measurement.setTo(Scalar(0));
 static Mat estimated;
-static double x, y, z;
+//static double x, y, z;
 
 static MPU6050 mpu;
-static MPU_6050 mpu6050;
-static AXDL345  axdl345;
+//static MPU_6050 mpu6050;
+//static AXDL345  axdl345;
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -185,7 +185,7 @@ void *thread_feature(void *arg)
 
 void *thread_sensor(void* arg)
 {
-	setup();
+	//setup();
 	/*
 	mpu6050.Init();
 
@@ -207,8 +207,8 @@ void *thread_sensor(void* arg)
 	*/
 
 	//double x, y, z;
-	double xSpeed = 0, ySpeed = 0, zSpeed = 0;
-	double X = 0, Y = 0, Z = 0;
+	//double xSpeed = 0, ySpeed = 0, zSpeed = 0;
+	//double X = 0, Y = 0, Z = 0;
 
 	Quaternion q;           // [w, x, y, z]         quaternion container
 
@@ -269,7 +269,7 @@ void show()
 	SDL_Rect dstRect = {0, 0};
  
 	Point center(WIDTH / 2, HEIGHT / 2);
-	Point vector(center.x + (int)(estimated.at<float>(0) * 100), center.y + (int)(estimated.at<float>(1) * 100));
+	Point vector(center.x + (int)(estimated.at<float>(0)), center.y + (int)(estimated.at<float>(1)));
 	//Point vector(center.x + (int)(x * 100), center.y + (int)(y * 100));
 
 	Mat surface(HEIGHT, WIDTH, CV_8UC3, frame->pixels);
@@ -281,7 +281,7 @@ void show()
 	// Center
 	circle(surface, center, 3, Scalar(255, 255, 255));
 	line(surface, center, vector, Scalar(255, 255, 255));
-	vector = Point(center.x + (int)(x * 100), center.y + (int)(y * 100));
+	vector = Point(center.x + (int)(accelWorld.x), center.y + (int)(accelWorld.y));
 	line(surface, center, vector, Scalar(255, 0, 0));
 
 	//printf("%d ", keypoints.size());
@@ -314,6 +314,7 @@ int main (int argc, char *argv[])
 		0x000000ff, 0x0000ff00, 0x00ff0000, 0);
 	image.create(HEIGHT, WIDTH, CV_8UC3);
 
+	setup();
 	SDL_Flip(screen);
 	//The settings of the image capture
 	omxcam_video_settings_t	settings;
