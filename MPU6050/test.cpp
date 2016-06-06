@@ -340,10 +340,18 @@ static void setup() {
 	adjGyro[2] /= 20;
 	printf("ADJUST: %d, %d, %d\n", adjAccel[0], adjAccel[1], adjAccel[2]);
 
+	///////////////////////////////////////////////////////////////////////
+	// Initialize Kalman filter
 	float v = INTERVAL / 1000.0;
 	float a = 0.5 * pow(v, 2);
 
+	setIdentity(kalman.measurementMatrix);
+	setIdentity(kalman.processNoiseCov, cv::Scalar::all(1e-4));
+	setIdentity(kalman.measurementNoiseCov, cv::Scalar::all(10));
+	setIdentity(kalman.errorCovPost, cv::Scalar::all(.1));
+
 	measurement.setTo(cv::Scalar(0));
+
 	kalman.transitionMatrix =
 		*(cv::Mat_<float>(9, 9) <<
 		1, 0, 0, v, 0, 0, a, 0, 0,
@@ -356,16 +364,17 @@ static void setup() {
 		0, 0, 0, 0, 0, 0, 0, 1, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 1
 		);
+
+	kalman.measurementMatrix.at<float>(0, 0) = 1;
+	kalman.measurementMatrix.at<float>(1, 1) = 1;
+	kalman.measurementMatrix.at<float>(2, 2) = 1;
+
 	readFIFO();
 	mpu.dmpGetAccel(accel, fifoBuffer);
 	kalman.statePre.at<float>(0) = accel[0];
 	kalman.statePre.at<float>(1) = accel[1];
 	kalman.statePre.at<float>(2) = accel[2];
 	kalman.statePre.at<float>(3) = 0.0;
-	setIdentity(kalman.measurementMatrix);
-	setIdentity(kalman.processNoiseCov, cv::Scalar::all(1e-4));
-	setIdentity(kalman.measurementNoiseCov, cv::Scalar::all(10));
-	setIdentity(kalman.errorCovPost, cv::Scalar::all(.1));
 }
 
 //////////////////////////////////////////////////////////
