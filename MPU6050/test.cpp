@@ -340,7 +340,7 @@ static void setup() {
 	adjGyro[2] /= 20;
 	printf("ADJUST: %d, %d, %d\n", adjAccel[0], adjAccel[1], adjAccel[2]);
 
-	float v = 1.0 / (INTERVAL / 1000.0);
+	float v = INTERVAL / 1000.0;
 	float a = 0.5 * pow(v, 2);
 
 	measurement.setTo(cv::Scalar(0));
