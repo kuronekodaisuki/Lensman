@@ -47,7 +47,7 @@ VectorInt16 accelWorld;    // [x, y, z]            world-frame accel sensor meas
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-cv::KalmanFilter kalman(4, 3, 0);	// measure 3 dimensional position
+cv::KalmanFilter kalman(9, 3, 0);	// measure 3 dimensional position
 cv::Mat_<float> measurement(3, 1); // measurement.setTo(Scalar(0));
 cv::Mat estimated;
 
@@ -340,13 +340,22 @@ static void setup() {
 	adjGyro[2] /= 20;
 	printf("ADJUST: %d, %d, %d\n", adjAccel[0], adjAccel[1], adjAccel[2]);
 
+	float v = 1.0 / (INTERVAL / 1000);
+	float a = 0.5 * pow(dt, 2);
+
 	measurement.setTo(cv::Scalar(0));
 	kalman.transitionMatrix =
-		*(cv::Mat_<float>(4, 4) <<
-		1, 0, 1, 0,
-		0, 1, 0, 1,
-		0, 0, 1, 0,
-		0, 0, 0, 1);
+		*(cv::Mat_<float>(9, 9) <<
+		1, 0, 0, v, 0, 0, a, 0, 0,
+		0, 1, 0, 0, v, 0, 0, a, 0,
+		0, 0, 1, 0, 0, v, 0, 0, a,
+		0, 0, 0, 1, 0, 0, v, 0, 0,
+		0, 0, 0, 0, 1, 0, 0, v, 0,
+		0, 0, 0, 0, 0, 1, 0, 0, v,
+		0, 0, 0, 0, 0, 0, 1, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 1,
+		);
 	readFIFO();
 	mpu.dmpGetAccel(accel, fifoBuffer);
 	kalman.statePre.at<float>(0) = accel[0];
