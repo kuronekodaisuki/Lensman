@@ -17,7 +17,7 @@
 
 #include "MPU6050_6Axis_MotionApps20.h"
 
-#define INTERVAL	20 // msec
+#define INTERVAL	10 // msec
 
 
 MPU6050 mpu;
