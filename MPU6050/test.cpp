@@ -346,9 +346,9 @@ static void setup() {
 	float a = 0.5 * pow(v, 2);
 
 	setIdentity(kalman.measurementMatrix);
-	setIdentity(kalman.processNoiseCov, cv::Scalar::all(1e-4));
-	setIdentity(kalman.measurementNoiseCov, cv::Scalar::all(10));
-	setIdentity(kalman.errorCovPost, cv::Scalar::all(.1));
+	setIdentity(kalman.processNoiseCov, cv::Scalar::all(1e-5));
+	setIdentity(kalman.measurementNoiseCov, cv::Scalar::all(1e-4));
+	setIdentity(kalman.errorCovPost, cv::Scalar::all(1));
 
 	measurement.setTo(cv::Scalar(0));
 
