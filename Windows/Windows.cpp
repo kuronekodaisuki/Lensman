@@ -4,16 +4,32 @@
 #include "stdafx.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/ocl/ocl.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/nonfree/features2d.hpp>
 
+#ifdef _DEBUG
+#pragma comment(lib, "opencv_core2410d.lib")
+#pragma comment(lib, "opencv_features2d2410d.lib")
+#pragma comment(lib, "opencv_flann2410d.lib")
+#pragma comment(lib, "opencv_highgui2410d.lib")
+#pragma comment(lib, "opencv_imgproc2410d.lib")
+#pragma comment(lib, "opencv_ml2410d.lib")
+#pragma comment(lib, "opencv_nonfree2410d.lib")
+#pragma comment(lib, "opencv_objdetect2410d.lib")
+#pragma comment(lib, "opencv_ocl2410d.lib")
+#pragma comment(lib, "opencv_video2410d.lib")
+#else
 #pragma comment(lib, "opencv_core2410.lib")
 #pragma comment(lib, "opencv_features2d2410.lib")
 #pragma comment(lib, "opencv_flann2410.lib")
 #pragma comment(lib, "opencv_highgui2410.lib")
 #pragma comment(lib, "opencv_imgproc2410.lib")
 #pragma comment(lib, "opencv_ml2410.lib")
+#pragma comment(lib, "opencv_nonfree2410.lib")
 #pragma comment(lib, "opencv_objdetect2410.lib")
 #pragma comment(lib, "opencv_ocl2410.lib")
 #pragma comment(lib, "opencv_video2410.lib")
+#endif
 
 using namespace cv;
 using namespace cv::ocl;
@@ -23,12 +39,10 @@ using namespace cv::ocl;
 
 Mat image;
 Mat buffer(640, 480, CV_8UC3);
-Ptr<FeatureDetector> detector = FeatureDetector::create("STAR");
-GoodFeaturesToTrackDetector_OCL ocl;
-
 // features
-std::vector<KeyPoint> keypoint;
+std::vector<KeyPoint> keypoint[2];
 
+//GoodFeaturesToTrackDetector_OCL ocl;
 
 void checkOpenCL()
 {
@@ -52,8 +66,18 @@ int main(int argc, char* argv[])
 	camera.set(CV_CAP_PROP_FRAME_HEIGHT, HEIGHT);
 	camera.open(0);
 	
-	checkOpenCL();
+	//checkOpenCL();
+	Ptr<FeatureDetector> detector = FeatureDetector::create("STAR");
+	//Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("FREAK");
+	BriefDescriptorExtractor extractor;
+	FlannBasedMatcher matcher;
+	std::vector< DMatch > matches;
+	Mat descriptor[2];
 
+	int k = 0;
+	camera >> image;
+	detector->detect(image, keypoint[1]);
+	extractor.compute(image, keypoint[1], descriptor[1]);
 	for (bool loop = true; loop; )
 	{
 		switch (waitKey(10))
@@ -67,19 +91,22 @@ int main(int argc, char* argv[])
 			break;
 
 		// detect features
-		detector->detect(image, keypoint);
-		
-		// OpenCL
-		//oclMat oclImage;
-		//oclMat oclCorners;
-		//ocl(oclImage, oclCorners);
-
-		printf("%d\n", keypoint.size());
-		for (int i = 0; i < keypoint.size(); i++)
+		detector->detect(image, keypoint[k % 2]);
+		extractor.compute(image, keypoint[k % 2], descriptor[k % 2]);
+		try {
+			matcher.match(descriptor[0], descriptor[1], matches);
+		}
+		catch (Exception ex)
 		{
-			Point2f pt = keypoint[i].pt;
+			printf("%s", ex.msg);
+		}
+		printf("%d\n", keypoint[k % 2].size());
+		for (int i = 0; i < keypoint[k % 2].size(); i++)
+		{
+			Point2f pt = keypoint[k % 2][i].pt;
 			circle(image, Point(pt.x, pt.y), 3, Scalar(0, 0, 255));
 		}
+		k++;
 		imshow("image", image);
 	}
 	return 0;
